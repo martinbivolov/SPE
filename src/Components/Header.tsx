@@ -64,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         >
           {isDark ? <FiSun /> : <FiMoon />}
         </IconButton>
-        <Text mr={2}>X</Text>
+        <Text mr={2}>Done Joe</Text>
         <Box
           w="32px"
           h="32px"

@@ -6,6 +6,7 @@ import SoundPreferenceQuestions from '../Components/SoundPreferenceQuestions';
 import LifestyleQuestions from '../Components/LifestyleQuestions';
 import LifestyleSelectionSection from '../Components/LifestyleSelectionSection';
 import LifestyleImagePicker from '../Components/LifestyleImagePicker';
+import SoundPreferenceSplitScreen from '../Components/SoundPreferenceSplitScreen';
 import Footer from '../Components/Footer';
 
 interface LifestyleExplorationProps {
@@ -24,7 +25,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ onNext, onB
   };
 
   const handleNext = () => {
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       onNext?.();
     } else {
       setCurrentStep(currentStep + 1);
@@ -40,6 +41,10 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ onNext, onB
   };
 
   const getHeaderTitle = () => {
+    if (currentStep === 4) {
+      return "Sound Preference";
+    }
+
     return "Lifestyle Exploration";
   };
 
@@ -67,6 +72,13 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ onNext, onB
             onSelectionChange={setSelectedLifestyleImages}
           />
         );
+      case 4:
+        return (
+          <SoundPreferenceSplitScreen
+            onBack={handleBack}
+            onNext={handleNext}
+          />
+        );
       default:
         return <SoundPreferenceQuestions onNext={handleNext} onBack={handleBack} />;
     }
@@ -74,7 +86,12 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ onNext, onB
 
   return (
     <Flex h="100vh" bg="gray.50" _dark={{ bg: 'gray.800' }} position="relative">
-      <Sidebar activeItem="Lifestyle" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onOpen={() => setSidebarOpen(true)} />
+      <Sidebar
+        activeItem={currentStep === 4 ? "Sound" : "Lifestyle"}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)}
+      />
       <Flex direction="column" flex="1" w="100%">
         <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} />
         <Box

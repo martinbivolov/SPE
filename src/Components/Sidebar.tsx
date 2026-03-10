@@ -12,7 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, isOpen, onClose, onOpen }
   const items = [
     { label: "Profile", key: "Profile" },
     { label: "Lifestyle Exploration", key: "Lifestyle" },
-    { label: "Sound Preference", key: "Sound" },
+    { label: "Sound Exploration", key: "Sound" },
     { label: "Your Digital Twin", key: "DigitalTwin" },
   ] as const;
 
