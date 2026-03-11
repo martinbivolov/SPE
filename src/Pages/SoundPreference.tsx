@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Flex, Box } from '@chakra-ui/react';
-import Sidebar from '../Components/Sidebar';
-import Header from '../Components/Header';
-import ProfileForm from '../Components/ProfileForm';
-import Footer from '../Components/Footer';
+import Sidebar from '../components/layout/Sidebar';
+import Header from '../components/layout/Header';
+import ProfileForm from '../features/profile/ProfileForm';
+import Footer from '../components/layout/Footer';
 
 interface SoundPreferenceProps {
   onCompleted?: () => void;

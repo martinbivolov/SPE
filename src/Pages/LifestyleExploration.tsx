@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Flex, Box } from '@chakra-ui/react';
-import Sidebar from '../Components/Sidebar';
-import Header from '../Components/Header';
-import SoundPreferenceQuestions from '../Components/SoundPreferenceQuestions';
-import LifestyleQuestions from '../Components/LifestyleQuestions';
-import LifestyleSelectionSection from '../Components/LifestyleSelectionSection';
-import LifestyleImagePicker from '../Components/LifestyleImagePicker';
-import SoundPreferenceSplitScreen from '../Components/SoundPreferenceSplitScreen';
-import Footer from '../Components/Footer';
+import Sidebar from '../components/layout/Sidebar';
+import Header from '../components/layout/Header';
+import SoundPreferenceQuestions from '../features/soundSplit/SoundPreferenceQuestions';
+import LifestyleQuestions from '../features/lifestyle/LifestyleQuestions';
+import LifestyleSelectionSection from '../features/lifestyle/LifestyleSelectionSection';
+import LifestyleImagePicker from '../features/lifestyle/LifestyleImagePicker';
+import SoundPreferenceSplitScreen from '../features/soundSplit/SoundPreferenceSplitScreen';
+import Footer from '../components/layout/Footer';
 
 interface LifestyleExplorationProps {
   onNext?: () => void;

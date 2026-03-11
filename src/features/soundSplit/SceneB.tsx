@@ -3,28 +3,41 @@ import { Box, Image, Switch, Text } from "@chakra-ui/react";
 import ClickableElement from "./ClickableElement";
 import type { SceneData } from "./types";
 
-interface SceneAProps {
+interface SceneBProps {
   scene: SceneData;
   dividerX: number;
   isAudioEnabled: boolean;
   onToggleAudio: () => void;
+  showOverlay?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
+  tutorialToggleRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const SceneA: React.FC<SceneAProps> = ({
+const SceneB: React.FC<SceneBProps> = ({
   scene,
   dividerX,
   isAudioEnabled,
   onToggleAudio,
+  showOverlay = true,
   onHoldChange,
+  tutorialToggleRef,
 }) => {
   return (
-    <Box position="absolute" inset={0} zIndex={0} overflow="hidden">
+    <Box
+      position="absolute"
+      inset={0}
+      zIndex={1}
+      overflow="hidden"
+      clipPath={`inset(0 0 0 ${dividerX}%)`}
+      transition="clip-path 0.05s linear"
+    >
       <Image src={scene.backgroundImageUrl} alt={scene.name} w="100%" h="100%" objectFit="cover" />
 
-      <Box position="absolute" top={4} left={4} zIndex={8} bg="blackAlpha.600" borderRadius="md" px={3} py={2}>
+      {showOverlay && <Box position="absolute" inset={0} zIndex={2} bg="rgba(0, 0, 0, 0.45)" pointerEvents="none" />}
+
+      <Box ref={tutorialToggleRef} position="absolute" top={4} right={4} zIndex={8} bg="blackAlpha.600" borderRadius="md" px={3} py={2}>
         <Text color="white" fontSize="xs" mb={1}>
-          World A Audio
+          World B Audio
         </Text>
         <Switch.Root checked={isAudioEnabled} onCheckedChange={onToggleAudio}>
           <Switch.HiddenInput />
@@ -41,7 +54,7 @@ const SceneA: React.FC<SceneAProps> = ({
         <ClickableElement
           key={element.id}
           element={element}
-          sceneSide="A"
+          sceneSide="B"
           dividerX={dividerX}
           onHoldChange={onHoldChange}
         />
@@ -50,4 +63,4 @@ const SceneA: React.FC<SceneAProps> = ({
   );
 };
 
-export default SceneA;
+export default SceneB;

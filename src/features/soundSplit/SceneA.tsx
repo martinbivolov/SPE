@@ -3,39 +3,32 @@ import { Box, Image, Switch, Text } from "@chakra-ui/react";
 import ClickableElement from "./ClickableElement";
 import type { SceneData } from "./types";
 
-interface SceneBProps {
+interface SceneAProps {
   scene: SceneData;
   dividerX: number;
   isAudioEnabled: boolean;
   onToggleAudio: () => void;
-  showOverlay?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
+  tutorialObjectId?: string;
+  tutorialObjectRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const SceneB: React.FC<SceneBProps> = ({
+const SceneA: React.FC<SceneAProps> = ({
   scene,
   dividerX,
   isAudioEnabled,
   onToggleAudio,
-  showOverlay = true,
   onHoldChange,
+  tutorialObjectId,
+  tutorialObjectRef,
 }) => {
   return (
-    <Box
-      position="absolute"
-      inset={0}
-      zIndex={1}
-      overflow="hidden"
-      clipPath={`inset(0 0 0 ${dividerX}%)`}
-      transition="clip-path 0.05s linear"
-    >
+    <Box position="absolute" inset={0} zIndex={0} overflow="hidden">
       <Image src={scene.backgroundImageUrl} alt={scene.name} w="100%" h="100%" objectFit="cover" />
 
-      {showOverlay && <Box position="absolute" inset={0} zIndex={2} bg="rgba(0, 0, 0, 0.45)" pointerEvents="none" />}
-
-      <Box position="absolute" top={4} right={4} zIndex={8} bg="blackAlpha.600" borderRadius="md" px={3} py={2}>
+      <Box position="absolute" top={4} left={4} zIndex={8} bg="blackAlpha.600" borderRadius="md" px={3} py={2}>
         <Text color="white" fontSize="xs" mb={1}>
-          World B Audio
+          World A Audio
         </Text>
         <Switch.Root checked={isAudioEnabled} onCheckedChange={onToggleAudio}>
           <Switch.HiddenInput />
@@ -52,13 +45,14 @@ const SceneB: React.FC<SceneBProps> = ({
         <ClickableElement
           key={element.id}
           element={element}
-          sceneSide="B"
+          sceneSide="A"
           dividerX={dividerX}
           onHoldChange={onHoldChange}
+          elementRef={element.id === tutorialObjectId ? tutorialObjectRef : undefined}
         />
       ))}
     </Box>
   );
 };
 
-export default SceneB;
+export default SceneA;

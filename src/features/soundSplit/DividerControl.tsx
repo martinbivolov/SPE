@@ -4,9 +4,10 @@ import { Box } from "@chakra-ui/react";
 interface DividerControlProps {
   dividerX: number;
   onDividerChange: (value: number) => void;
+  dividerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChange }) => {
+const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChange, dividerRef }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const toPercent = (clientX: number, host: HTMLDivElement) => {
@@ -24,6 +25,7 @@ const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChan
       pointerEvents="none"
     >
       <Box
+        ref={dividerRef}
         position="absolute"
         top={0}
         bottom={0}

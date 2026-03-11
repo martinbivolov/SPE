@@ -8,6 +8,7 @@ interface ClickableElementProps {
   sceneSide: SceneSide;
   dividerX: number;
   onHoldChange: (id: string, isHeld: boolean) => void;
+  elementRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const shake = keyframes`
@@ -23,6 +24,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
   sceneSide,
   dividerX,
   onHoldChange,
+  elementRef,
 }) => {
   const [isHeld, setIsHeld] = useState(false);
 
@@ -54,6 +56,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
 
   return (
     <Box
+      ref={elementRef}
       position="absolute"
       left={`${element.x}%`}
       top={`${element.y}%`}

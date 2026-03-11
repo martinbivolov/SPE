@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from "react";
-import { Box, Text } from "@chakra-ui/react";
-import SceneA from "./SoundSplit/SceneA";
-import SceneB from "./SoundSplit/SceneB";
-import DividerControl from "./SoundSplit/DividerControl";
-import AudioEngine from "./SoundSplit/AudioEngine";
-import NavigationControls from "./SoundSplit/NavigationControls";
-import type { SceneData } from "./SoundSplit/types";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Box, IconButton, Text } from "@chakra-ui/react";
+import { FiInfo } from "react-icons/fi";
+import SceneA from "./SceneA";
+import SceneB from "./SceneB";
+import DividerControl from "./DividerControl";
+import AudioEngine from "./AudioEngine";
+import NavigationControls from "./NavigationControls";
+import TutorialOverlay from "./TutorialOverlay";
+import type { SceneData } from "./types";
 
 interface SoundPreferenceSplitScreenProps {
 	onBack: () => void;
@@ -80,6 +82,13 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const [isAudioAEnabled, setIsAudioAEnabled] = useState(true);
 	const [isAudioBEnabled, setIsAudioBEnabled] = useState(true);
 	const [scenes] = useState<SceneData[]>(placeholderScenes);
+	const [isTutorialActive, setIsTutorialActive] = useState(true);
+	const [tutorialStep, setTutorialStep] = useState(1);
+
+	const infoButtonRef = useRef<HTMLButtonElement | null>(null);
+	const dividerRef = useRef<HTMLDivElement | null>(null);
+	const toggleRef = useRef<HTMLDivElement | null>(null);
+	const objectRef = useRef<HTMLDivElement | null>(null);
 
 	const sceneA = useMemo(() => scenes.find((scene) => scene.side === "A"), [scenes]);
 	const sceneB = useMemo(() => scenes.find((scene) => scene.side === "B"), [scenes]);
@@ -96,6 +105,28 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 			return previous.filter((entry) => entry !== elementId);
 		});
+	};
+
+	useEffect(() => {
+		if (!isTutorialActive) {
+			return;
+		}
+
+		setActiveElements([]);
+	}, [isTutorialActive]);
+
+	const startTutorial = () => {
+		setIsTutorialActive(true);
+		setTutorialStep(1);
+	};
+
+	const handleAdvanceTutorial = () => {
+		setTutorialStep((value) => value + 1);
+	};
+
+	const handleTutorialComplete = () => {
+		setIsTutorialActive(false);
+		setTutorialStep(0);
 	};
 
 	if (!sceneA || !sceneB) {
@@ -138,6 +169,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					isAudioEnabled={isAudioAEnabled}
 					onToggleAudio={() => setIsAudioAEnabled((value) => !value)}
 					onHoldChange={handleHoldChange}
+					tutorialObjectId="a-phone"
+					tutorialObjectRef={objectRef}
 				/>
 				<SceneB
 					scene={sceneB}
@@ -146,8 +179,24 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					onToggleAudio={() => setIsAudioBEnabled((value) => !value)}
 					showOverlay
 					onHoldChange={handleHoldChange}
+					tutorialToggleRef={toggleRef}
 				/>
-				<DividerControl dividerX={dividerX} onDividerChange={setDividerX} />
+				<DividerControl dividerX={dividerX} onDividerChange={setDividerX} dividerRef={dividerRef} />
+
+				<IconButton
+					ref={infoButtonRef}
+					aria-label="Open tutorial"
+					position="absolute"
+					left={4}
+					bottom={4}
+					zIndex={11}
+					size="sm"
+					borderRadius="full"
+					colorScheme="blue"
+					onClick={startTutorial}
+				>
+					<FiInfo />
+				</IconButton>
 			</Box>
 
 			<AudioEngine
@@ -158,6 +207,17 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			/>
 
 			<NavigationControls onBack={onBack} onNext={onNext} />
+
+			<TutorialOverlay
+				isActive={isTutorialActive}
+				step={tutorialStep}
+				onAdvance={handleAdvanceTutorial}
+				onComplete={handleTutorialComplete}
+				iButtonRef={infoButtonRef}
+				dividerRef={dividerRef}
+				toggleRef={toggleRef}
+				objectRef={objectRef}
+			/>
 		</Box>
 	);
 };
