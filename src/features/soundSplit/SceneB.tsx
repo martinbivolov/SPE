@@ -7,6 +7,8 @@ interface SceneBProps {
   scene: SceneData;
   dividerX: number;
   isAudioEnabled: boolean;
+  isInteractive?: boolean;
+  isAnimating?: boolean;
   onToggleAudio: () => void;
   showOverlay?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
@@ -17,6 +19,8 @@ const SceneB: React.FC<SceneBProps> = ({
   scene,
   dividerX,
   isAudioEnabled,
+  isInteractive = true,
+  isAnimating = false,
   onToggleAudio,
   showOverlay = true,
   onHoldChange,
@@ -29,7 +33,7 @@ const SceneB: React.FC<SceneBProps> = ({
       zIndex={1}
       overflow="hidden"
       clipPath={`inset(0 0 0 ${dividerX}%)`}
-      transition="clip-path 0.05s linear"
+      transition={isAnimating ? "clip-path 1.2s ease-in-out" : "clip-path 0.05s linear"}
     >
       <Image src={scene.backgroundImageUrl} alt={scene.name} w="100%" h="100%" objectFit="cover" />
 
@@ -39,7 +43,7 @@ const SceneB: React.FC<SceneBProps> = ({
         <Text color="white" fontSize="xs" mb={1}>
           World B Audio
         </Text>
-        <Switch.Root checked={isAudioEnabled} onCheckedChange={onToggleAudio}>
+        <Switch.Root checked={isAudioEnabled} disabled={!isInteractive || isAnimating} onCheckedChange={onToggleAudio}>
           <Switch.HiddenInput />
           <Switch.Control>
             <Switch.Thumb />
@@ -56,6 +60,7 @@ const SceneB: React.FC<SceneBProps> = ({
           element={element}
           sceneSide="B"
           dividerX={dividerX}
+          isInteractive={isInteractive}
           onHoldChange={onHoldChange}
         />
       ))}

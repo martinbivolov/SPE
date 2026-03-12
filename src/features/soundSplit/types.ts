@@ -16,6 +16,6 @@ export interface SceneData {
   name: string;
   backgroundImageUrl: string;
   audioLabel: string;
-  audioFrequency: number;
+  audioUrl: string;
   elements: SceneElement[];
 }

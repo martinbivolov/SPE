@@ -20,8 +20,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
   isAudioBEnabled,
 }) => {
   const contextRef = useRef<AudioContext | null>(null);
-  const bgARef = useRef<ToneHandle | null>(null);
-  const bgBRef = useRef<ToneHandle | null>(null);
+  const bgARef = useRef<HTMLAudioElement | null>(null);
+  const bgBRef = useRef<HTMLAudioElement | null>(null);
   const sfxMapRef = useRef<Map<string, ToneHandle>>(new Map());
 
   useEffect(() => {
@@ -41,40 +41,41 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
   }, [isAudioAEnabled, isAudioBEnabled, activeElements.length]);
 
   useEffect(() => {
-    const context = contextRef.current;
-    if (!context) {
-      return;
-    }
-
-    const buildBackgroundTone = (frequency: number): ToneHandle => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-      gain.gain.value = 0;
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start();
-      return { oscillator, gain };
-    };
-
     const sceneA = scenes.find((scene) => scene.side === "A");
     const sceneB = scenes.find((scene) => scene.side === "B");
 
     if (sceneA && !bgARef.current) {
-      bgARef.current = buildBackgroundTone(sceneA.audioFrequency);
+      const audio = new Audio(sceneA.audioUrl);
+      audio.loop = true;
+      audio.preload = "auto";
+      audio.volume = 0.35;
+      bgARef.current = audio;
     }
 
     if (sceneB && !bgBRef.current) {
-      bgBRef.current = buildBackgroundTone(sceneB.audioFrequency);
+      const audio = new Audio(sceneB.audioUrl);
+      audio.loop = true;
+      audio.preload = "auto";
+      audio.volume = 0.35;
+      bgBRef.current = audio;
     }
 
     if (bgARef.current) {
-      bgARef.current.gain.gain.setTargetAtTime(isAudioAEnabled ? 0.035 : 0, context.currentTime, 0.03);
+      if (isAudioAEnabled) {
+        void bgARef.current.play().catch(() => undefined);
+      } else {
+        bgARef.current.pause();
+        bgARef.current.currentTime = 0;
+      }
     }
 
     if (bgBRef.current) {
-      bgBRef.current.gain.gain.setTargetAtTime(isAudioBEnabled ? 0.035 : 0, context.currentTime, 0.03);
+      if (isAudioBEnabled) {
+        void bgBRef.current.play().catch(() => undefined);
+      } else {
+        bgBRef.current.pause();
+        bgBRef.current.currentTime = 0;
+      }
     }
   }, [isAudioAEnabled, isAudioBEnabled, scenes]);
 
@@ -133,14 +134,14 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
       });
       sfxMapRef.current.clear();
 
-      [bgARef.current, bgBRef.current].forEach((tone) => {
-        if (!tone) {
+      [bgARef.current, bgBRef.current].forEach((audio) => {
+        if (!audio) {
           return;
         }
 
-        tone.oscillator.stop();
-        tone.oscillator.disconnect();
-        tone.gain.disconnect();
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = "";
       });
 
       bgARef.current = null;

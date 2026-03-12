@@ -21,7 +21,7 @@ const placeholderScenes: SceneData[] = [
 		name: "World A",
 		backgroundImageUrl: "/PickYourStyle/kitchen_copilot_3.2 1.png",
 		audioLabel: "World A Ambience",
-		audioFrequency: 180,
+		audioUrl: "/Audio/Scenses/Audio Scene B - Kitchen/WSA_AudioSceneB_OptionA.wav",
 		elements: [
 			{
 				id: "a-phone",
@@ -49,7 +49,7 @@ const placeholderScenes: SceneData[] = [
 		name: "World B",
 		backgroundImageUrl: "/PickYourStyle/kitchen_copilot_3.2 1.png",
 		audioLabel: "World B Ambience",
-		audioFrequency: 230,
+		audioUrl: "/Audio/Scenses/Audio Scene B - Kitchen/WSA_AudioSceneB_OptionB.wav",
 		elements: [
 			{
 				id: "b-car",
@@ -79,11 +79,12 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 }) => {
 	const [dividerX, setDividerX] = useState(50);
 	const [activeElements, setActiveElements] = useState<string[]>([]);
-	const [isAudioAEnabled, setIsAudioAEnabled] = useState(true);
-	const [isAudioBEnabled, setIsAudioBEnabled] = useState(true);
+	const [isAudioAEnabled, setIsAudioAEnabled] = useState(false);
+	const [isAudioBEnabled, setIsAudioBEnabled] = useState(false);
 	const [scenes] = useState<SceneData[]>(placeholderScenes);
-	const [isTutorialActive, setIsTutorialActive] = useState(true);
+	const [isTutorialActive, setIsTutorialActive] = useState(false);
 	const [tutorialStep, setTutorialStep] = useState(1);
+	const [isIntroPlaying, setIsIntroPlaying] = useState(true);
 
 	const infoButtonRef = useRef<HTMLButtonElement | null>(null);
 	const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +93,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 	const sceneA = useMemo(() => scenes.find((scene) => scene.side === "A"), [scenes]);
 	const sceneB = useMemo(() => scenes.find((scene) => scene.side === "B"), [scenes]);
+	const isInteractive = !isIntroPlaying && !isTutorialActive;
 
 	const handleHoldChange = (elementId: string, isHeld: boolean) => {
 		setActiveElements((previous) => {
@@ -114,6 +116,49 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 		setActiveElements([]);
 	}, [isTutorialActive]);
+
+	useEffect(() => {
+		const timeoutIds: number[] = [];
+
+		setDividerX(50);
+		setIsAudioAEnabled(false);
+		setIsAudioBEnabled(false);
+		setActiveElements([]);
+		setIsIntroPlaying(true);
+		setIsTutorialActive(false);
+
+		timeoutIds.push(
+			window.setTimeout(() => {
+				setIsAudioAEnabled(true);
+				setDividerX(85);
+			}, 500),
+		);
+
+		timeoutIds.push(
+			window.setTimeout(() => {
+				setIsAudioAEnabled(false);
+				setIsAudioBEnabled(true);
+				setDividerX(15);
+			}, 3200),
+		);
+
+		timeoutIds.push(
+			window.setTimeout(() => {
+				setIsAudioBEnabled(false);
+				setDividerX(50);
+			}, 5900),
+		);
+
+		timeoutIds.push(
+			window.setTimeout(() => {
+				setIsIntroPlaying(false);
+			}, 7100),
+		);
+
+		return () => {
+			timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+		};
+	}, []);
 
 	const startTutorial = () => {
 		setIsTutorialActive(true);
@@ -167,6 +212,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					scene={sceneA}
 					dividerX={dividerX}
 					isAudioEnabled={isAudioAEnabled}
+					isInteractive={isInteractive}
+					isAnimating={isIntroPlaying}
 					onToggleAudio={() => setIsAudioAEnabled((value) => !value)}
 					onHoldChange={handleHoldChange}
 					tutorialObjectId="a-phone"
@@ -176,12 +223,20 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					scene={sceneB}
 					dividerX={dividerX}
 					isAudioEnabled={isAudioBEnabled}
+					isInteractive={isInteractive}
+					isAnimating={isIntroPlaying}
 					onToggleAudio={() => setIsAudioBEnabled((value) => !value)}
 					showOverlay
 					onHoldChange={handleHoldChange}
 					tutorialToggleRef={toggleRef}
 				/>
-				<DividerControl dividerX={dividerX} onDividerChange={setDividerX} dividerRef={dividerRef} />
+				<DividerControl
+					dividerX={dividerX}
+					isInteractive={isInteractive}
+					isAnimating={isIntroPlaying}
+					onDividerChange={setDividerX}
+					dividerRef={dividerRef}
+				/>
 
 				<IconButton
 					ref={infoButtonRef}

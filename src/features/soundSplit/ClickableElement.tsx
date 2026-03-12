@@ -7,6 +7,7 @@ interface ClickableElementProps {
   element: SceneElement;
   sceneSide: SceneSide;
   dividerX: number;
+  isInteractive?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
   elementRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -23,6 +24,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
   element,
   sceneSide,
   dividerX,
+  isInteractive = true,
   onHoldChange,
   elementRef,
 }) => {
@@ -37,7 +39,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
   }, [sceneSide, element.x, dividerX]);
 
   const startHold = () => {
-    if (!isEnabled) {
+    if (!isEnabled || !isInteractive) {
       return;
     }
 
@@ -63,7 +65,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
       transform="translate(-50%, -50%)"
       zIndex={5}
       opacity={isEnabled ? 1 : 0.35}
-      cursor={isEnabled ? "grab" : "not-allowed"}
+      cursor={isEnabled && isInteractive ? "grab" : "not-allowed"}
       userSelect="none"
       touchAction="none"
       onPointerDown={startHold}

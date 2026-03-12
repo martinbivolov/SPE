@@ -3,11 +3,19 @@ import { Box } from "@chakra-ui/react";
 
 interface DividerControlProps {
   dividerX: number;
+  isInteractive?: boolean;
+  isAnimating?: boolean;
   onDividerChange: (value: number) => void;
   dividerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChange, dividerRef }) => {
+const DividerControl: React.FC<DividerControlProps> = ({
+  dividerX,
+  isInteractive = true,
+  isAnimating = false,
+  onDividerChange,
+  dividerRef,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const toPercent = (clientX: number, host: HTMLDivElement) => {
@@ -32,11 +40,12 @@ const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChan
         left={`${dividerX}%`}
         transform="translateX(-50%)"
         w="40px"
-        pointerEvents="auto"
-        cursor="ew-resize"
+        pointerEvents={isInteractive ? "auto" : "none"}
+        cursor={isInteractive ? "ew-resize" : "default"}
         touchAction="none"
+        transition={isAnimating ? "left 1.2s ease-in-out" : "none"}
         onPointerMove={(event) => {
-          if (!isDragging) {
+          if (!isDragging || !isInteractive) {
             return;
           }
 
@@ -58,6 +67,10 @@ const DividerControl: React.FC<DividerControlProps> = ({ dividerX, onDividerChan
           }
         }}
         onPointerDown={(event) => {
+          if (!isInteractive) {
+            return;
+          }
+
           event.preventDefault();
           setIsDragging(true);
           event.currentTarget.setPointerCapture(event.pointerId);

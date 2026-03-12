@@ -7,6 +7,8 @@ interface SceneAProps {
   scene: SceneData;
   dividerX: number;
   isAudioEnabled: boolean;
+  isInteractive?: boolean;
+  isAnimating?: boolean;
   onToggleAudio: () => void;
   onHoldChange: (id: string, isHeld: boolean) => void;
   tutorialObjectId?: string;
@@ -17,6 +19,8 @@ const SceneA: React.FC<SceneAProps> = ({
   scene,
   dividerX,
   isAudioEnabled,
+  isInteractive = true,
+  isAnimating = false,
   onToggleAudio,
   onHoldChange,
   tutorialObjectId,
@@ -30,7 +34,7 @@ const SceneA: React.FC<SceneAProps> = ({
         <Text color="white" fontSize="xs" mb={1}>
           World A Audio
         </Text>
-        <Switch.Root checked={isAudioEnabled} onCheckedChange={onToggleAudio}>
+        <Switch.Root checked={isAudioEnabled} disabled={!isInteractive || isAnimating} onCheckedChange={onToggleAudio}>
           <Switch.HiddenInput />
           <Switch.Control>
             <Switch.Thumb />
@@ -47,6 +51,7 @@ const SceneA: React.FC<SceneAProps> = ({
           element={element}
           sceneSide="A"
           dividerX={dividerX}
+          isInteractive={isInteractive}
           onHoldChange={onHoldChange}
           elementRef={element.id === tutorialObjectId ? tutorialObjectRef : undefined}
         />
