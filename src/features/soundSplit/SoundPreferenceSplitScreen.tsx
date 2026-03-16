@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Box, IconButton, Text } from "@chakra-ui/react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, HStack, IconButton, Text } from "@chakra-ui/react";
 import { FiInfo } from "react-icons/fi";
 import SceneA from "./SceneA";
 import SceneB from "./SceneB";
@@ -7,93 +7,128 @@ import DividerControl from "./DividerControl";
 import AudioEngine from "./AudioEngine";
 import NavigationControls from "./NavigationControls";
 import TutorialOverlay from "./TutorialOverlay";
-import type { SceneData } from "./types";
+import VideoPlayer from "./VideoPlayer";
+import { mockSession } from "../../mocks/scenes";
+import type { SessionPhase } from "./types";
 
 interface SoundPreferenceSplitScreenProps {
 	onBack: () => void;
 	onNext: () => void;
 }
 
-const placeholderScenes: SceneData[] = [
-	{
-		id: "scene-a",
-		side: "A",
-		name: "World A",
-		backgroundImageUrl: "/PickYourStyle/kitchen_copilot_3.2 1.png",
-		audioLabel: "World A Ambience",
-		audioUrl: "/Audio/Scenses/Audio Scene B - Kitchen/WSA_AudioSceneB_OptionA.wav",
-		elements: [
-			{
-				id: "a-phone",
-				label: "Phone",
-				imageUrl: "/PickYourStyle/PhoneCall.png",
-				x: 26,
-				y: 48,
-				size: 78,
-				sfxFrequency: 420,
-			},
-			{
-				id: "a-music",
-				label: "Music",
-				imageUrl: "/PickYourStyle/MusicListening.png",
-				x: 58,
-				y: 62,
-				size: 70,
-				sfxFrequency: 540,
-			},
-		],
-	},
-	{
-		id: "scene-b",
-		side: "B",
-		name: "World B",
-		backgroundImageUrl: "/PickYourStyle/kitchen_copilot_3.2 1.png",
-		audioLabel: "World B Ambience",
-		audioUrl: "/Audio/Scenses/Audio Scene B - Kitchen/WSA_AudioSceneB_OptionB.wav",
-		elements: [
-			{
-				id: "b-car",
-				label: "Car",
-				imageUrl: "/PickYourStyle/InTheCar.png",
-				x: 68,
-				y: 46,
-				size: 74,
-				sfxFrequency: 480,
-			},
-			{
-				id: "b-outdoor",
-				label: "Outdoor",
-				imageUrl: "/PickYourStyle/OutdoorNature.png",
-				x: 82,
-				y: 62,
-				size: 68,
-				sfxFrequency: 620,
-			},
-		],
-	},
-];
+const SWEEP_MS = 600;
+const REPLAY_SWEEP_MS = 400;
+
+type SequenceMode = "intro" | "singleA" | "singleB" | "both";
 
 const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	onBack,
 	onNext,
 }) => {
 	const [dividerX, setDividerX] = useState(50);
+	const [dividerAnimationMs, setDividerAnimationMs] = useState(SWEEP_MS);
+	const [isDividerAnimating, setIsDividerAnimating] = useState(false);
 	const [activeElements, setActiveElements] = useState<string[]>([]);
-	const [isAudioAEnabled, setIsAudioAEnabled] = useState(false);
-	const [isAudioBEnabled, setIsAudioBEnabled] = useState(false);
-	const [scenes] = useState<SceneData[]>(placeholderScenes);
+	const [sessionPhase, setSessionPhase] = useState<SessionPhase>("intro");
+	const [caption, setCaption] = useState("In this adventure you will first watch Version 1.");
+	const [videoSrc, setVideoSrc] = useState(mockSession.sceneA.videoUrl);
+	const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+	const [sequenceMode, setSequenceMode] = useState<SequenceMode>("intro");
+	const [objectsInteractive, setObjectsInteractive] = useState(false);
+	const [wiggleObjects, setWiggleObjects] = useState(false);
 	const [isTutorialActive, setIsTutorialActive] = useState(false);
 	const [tutorialStep, setTutorialStep] = useState(1);
-	const [isIntroPlaying, setIsIntroPlaying] = useState(true);
+	const [preferredVersion, setPreferredVersion] = useState<"v1" | "v2" | "same" | null>(null);
+	const [strengthRating, setStrengthRating] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
 
 	const infoButtonRef = useRef<HTMLButtonElement | null>(null);
 	const dividerRef = useRef<HTMLDivElement | null>(null);
-	const toggleRef = useRef<HTMLDivElement | null>(null);
 	const objectRef = useRef<HTMLDivElement | null>(null);
+	const timeoutIdsRef = useRef<number[]>([]);
 
-	const sceneA = useMemo(() => scenes.find((scene) => scene.side === "A"), [scenes]);
-	const sceneB = useMemo(() => scenes.find((scene) => scene.side === "B"), [scenes]);
-	const isInteractive = !isIntroPlaying && !isTutorialActive;
+	const sceneA = useMemo(() => mockSession.sceneA, []);
+	const sceneB = useMemo(() => mockSession.sceneB, []);
+	const scenes = useMemo(() => [sceneA, sceneB], [sceneA, sceneB]);
+	const isVideoPhase = sessionPhase === "videoA" || sessionPhase === "videoB";
+	const isInteractivePhase = sessionPhase === "replay" || sessionPhase === "exploration";
+	const isQuestionPhase = sessionPhase === "preference" || sessionPhase === "strength";
+	const canInteractWithScene = isInteractivePhase && !isTutorialActive && objectsInteractive;
+
+	const clearTimers = useCallback(() => {
+		timeoutIdsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+		timeoutIdsRef.current = [];
+	}, []);
+
+	const schedule = useCallback((delayMs: number, callback: () => void) => {
+		const timeoutId = window.setTimeout(callback, delayMs);
+		timeoutIdsRef.current.push(timeoutId);
+	}, []);
+
+	const preloadInteractiveImage = useCallback(() => {
+		const image = new Image();
+		image.src = sceneA.backgroundImageUrl;
+	}, [sceneA.backgroundImageUrl]);
+
+	const animateDividerTo = useCallback(
+		(targetX: number, durationMs: number, onDone: () => void) => {
+			setDividerAnimationMs(durationMs);
+			setIsDividerAnimating(true);
+			setDividerX(targetX);
+			schedule(durationMs, () => {
+				setIsDividerAnimating(false);
+				onDone();
+			});
+		},
+		[schedule],
+	);
+
+	const beginWiggleWindow = useCallback(() => {
+		setWiggleObjects(true);
+		setObjectsInteractive(false);
+		schedule(800, () => {
+			setWiggleObjects(false);
+			setObjectsInteractive(true);
+		});
+	}, [schedule]);
+
+	const snapToInteractiveReplay = useCallback(() => {
+		setIsVideoPlaying(false);
+		setSessionPhase("replay");
+		setCaption("Replay options: Version 1, Version 2, or both.");
+		setDividerX(50);
+		setActiveElements([]);
+		setIsTutorialActive(false);
+		beginWiggleWindow();
+	}, [beginWiggleWindow]);
+
+	const startVideoA = useCallback(
+		(mode: SequenceMode, sweepDurationMs: number) => {
+			setSequenceMode(mode);
+			setIsVideoPlaying(false);
+			animateDividerTo(100, sweepDurationMs, () => {
+				setSessionPhase("videoA");
+				setVideoSrc(sceneA.videoUrl);
+				setCaption("Watch Version 1");
+				setIsVideoPlaying(true);
+			});
+		},
+		[animateDividerTo, sceneA.videoUrl],
+	);
+
+	const startVideoB = useCallback(
+		(mode: SequenceMode, sweepDurationMs: number) => {
+			setSequenceMode(mode);
+			setIsVideoPlaying(false);
+			setCaption("Now watch Version 2.");
+			preloadInteractiveImage();
+			animateDividerTo(0, sweepDurationMs, () => {
+				setSessionPhase("videoB");
+				setVideoSrc(sceneB.videoUrl);
+				setIsVideoPlaying(true);
+			});
+		},
+		[animateDividerTo, preloadInteractiveImage, sceneB.videoUrl],
+	);
 
 	const handleHoldChange = (elementId: string, isHeld: boolean) => {
 		setActiveElements((previous) => {
@@ -110,57 +145,71 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	};
 
 	useEffect(() => {
-		if (!isTutorialActive) {
+		if (!isTutorialActive || !isInteractivePhase) {
 			return;
 		}
 
 		setActiveElements([]);
-	}, [isTutorialActive]);
+	}, [isInteractivePhase, isTutorialActive]);
 
 	useEffect(() => {
-		const timeoutIds: number[] = [];
+		if (sessionPhase !== "videoB") {
+			return;
+		}
 
-		setDividerX(50);
-		setIsAudioAEnabled(false);
-		setIsAudioBEnabled(false);
+		preloadInteractiveImage();
+	}, [preloadInteractiveImage, sessionPhase]);
+
+	useEffect(() => {
+		clearTimers();
 		setActiveElements([]);
-		setIsIntroPlaying(true);
+		setDividerX(50);
+		setIsDividerAnimating(false);
+		setIsVideoPlaying(false);
 		setIsTutorialActive(false);
+		setPreferredVersion(null);
+		setStrengthRating(null);
 
-		timeoutIds.push(
-			window.setTimeout(() => {
-				setIsAudioAEnabled(true);
-				setDividerX(85);
-			}, 500),
-		);
+		setSessionPhase("intro");
+		setCaption("In this adventure you will first watch Version 1.");
+		setObjectsInteractive(false);
+		setWiggleObjects(false);
 
-		timeoutIds.push(
-			window.setTimeout(() => {
-				setIsAudioAEnabled(false);
-				setIsAudioBEnabled(true);
-				setDividerX(15);
-			}, 3200),
-		);
-
-		timeoutIds.push(
-			window.setTimeout(() => {
-				setIsAudioBEnabled(false);
-				setDividerX(50);
-			}, 5900),
-		);
-
-		timeoutIds.push(
-			window.setTimeout(() => {
-				setIsIntroPlaying(false);
-			}, 7100),
-		);
+		schedule(500, () => {
+			startVideoA("intro", SWEEP_MS);
+		});
 
 		return () => {
-			timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+			clearTimers();
 		};
-	}, []);
+	}, [clearTimers, schedule, startVideoA]);
+
+	const handleVideoEnded = useCallback(() => {
+		if (sessionPhase === "videoA") {
+			if (sequenceMode === "singleA") {
+				setIsVideoPlaying(false);
+				setSessionPhase("replay");
+				setCaption("Replay options: Version 1, Version 2, or both.");
+				setDividerX(50);
+				setSequenceMode("intro");
+				beginWiggleWindow();
+				return;
+			}
+
+			startVideoB(sequenceMode === "both" ? "both" : "intro", SWEEP_MS);
+			return;
+		}
+
+		if (sessionPhase === "videoB") {
+			snapToInteractiveReplay();
+		}
+	}, [beginWiggleWindow, sequenceMode, sessionPhase, snapToInteractiveReplay, startVideoB]);
 
 	const startTutorial = () => {
+		if (!isInteractivePhase) {
+			return;
+		}
+
 		setIsTutorialActive(true);
 		setTutorialStep(1);
 	};
@@ -174,9 +223,52 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		setTutorialStep(0);
 	};
 
-	if (!sceneA || !sceneB) {
-		return null;
-	}
+	const handleContinueFlow = () => {
+		if (sessionPhase === "replay") {
+			setSessionPhase("preference");
+			setCaption("Which version did you prefer?");
+			return;
+		}
+
+		if (sessionPhase === "preference") {
+			setSessionPhase("strength");
+			setCaption("How strong was that preference?");
+			return;
+		}
+
+		if (sessionPhase === "strength") {
+			setSessionPhase("exploration");
+			setCaption("Explore the scene and interact with objects.");
+			setWiggleObjects(false);
+			setObjectsInteractive(true);
+			return;
+		}
+
+		if (sessionPhase === "exploration") {
+			onNext();
+		}
+	};
+
+	const handleBackFlow = () => {
+		if (sessionPhase === "strength") {
+			setSessionPhase("preference");
+			setCaption("Which version did you prefer?");
+			return;
+		}
+
+		if (sessionPhase === "exploration") {
+			setSessionPhase("strength");
+			setCaption("How strong was that preference?");
+			setObjectsInteractive(false);
+			setWiggleObjects(false);
+			return;
+		}
+
+		onBack();
+	};
+
+	const versionLabel = sessionPhase === "videoA" ? "Version 1" : "Version 2";
+	const versionLabelPosition = sessionPhase === "videoA" ? { top: 4, right: 4 } : { top: 4, left: 4 };
 
 	return (
 		<Box
@@ -204,39 +296,63 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				Sound Preference Exploration
 			</Text>
 			<Text fontSize={{ base: "sm", md: "md" }} textAlign="center" color="gray.600" _dark={{ color: "gray.300" }} mb={6}>
-				Drag divider · Hold scene objects · Play each world independently
+				Watch both versions, then explore the scene
 			</Text>
 
 			<Box position="relative" borderRadius="lg" overflow="hidden" bg="black" minH={{ base: "380px", md: "520px" }} mb={6}>
-				<SceneA
-					scene={sceneA}
-					dividerX={dividerX}
-					isAudioEnabled={isAudioAEnabled}
-					isInteractive={isInteractive}
-					isAnimating={isIntroPlaying}
-					onToggleAudio={() => setIsAudioAEnabled((value) => !value)}
-					onHoldChange={handleHoldChange}
-					tutorialObjectId="a-phone"
-					tutorialObjectRef={objectRef}
-				/>
-				<SceneB
-					scene={sceneB}
-					dividerX={dividerX}
-					isAudioEnabled={isAudioBEnabled}
-					isInteractive={isInteractive}
-					isAnimating={isIntroPlaying}
-					onToggleAudio={() => setIsAudioBEnabled((value) => !value)}
-					showOverlay
-					onHoldChange={handleHoldChange}
-					tutorialToggleRef={toggleRef}
-				/>
+				{!isVideoPhase && (
+					<>
+						<SceneA
+							scene={sceneA}
+							dividerX={dividerX}
+							isInteractive={canInteractWithScene}
+							shouldWiggleObjects={wiggleObjects}
+							onHoldChange={handleHoldChange}
+							tutorialObjectId="a-phone"
+							tutorialObjectRef={objectRef}
+						/>
+						<SceneB
+							scene={sceneB}
+							dividerX={dividerX}
+							isInteractive={canInteractWithScene}
+							isAnimating={isDividerAnimating}
+							animationDurationMs={dividerAnimationMs}
+							showOverlay={false}
+							shouldWiggleObjects={wiggleObjects}
+							onHoldChange={handleHoldChange}
+						/>
+					</>
+				)}
+
+				{isVideoPhase && (
+					<VideoPlayer src={videoSrc} isPlaying={isVideoPlaying} onEnded={handleVideoEnded} showProgress />
+				)}
+
 				<DividerControl
 					dividerX={dividerX}
-					isInteractive={isInteractive}
-					isAnimating={isIntroPlaying}
+					isInteractive={!isVideoPhase && !isTutorialActive}
+					isAnimating={isDividerAnimating}
+					animationDurationMs={dividerAnimationMs}
 					onDividerChange={setDividerX}
 					dividerRef={dividerRef}
 				/>
+
+				{isVideoPhase && (
+					<Box
+						position="absolute"
+						zIndex={12}
+						bg="blackAlpha.600"
+						color="white"
+						fontSize="xs"
+						fontWeight="600"
+						px={3}
+						py={1.5}
+						borderRadius="full"
+						{...versionLabelPosition}
+					>
+						{versionLabel}
+					</Box>
+				)}
 
 				<IconButton
 					ref={infoButtonRef}
@@ -248,20 +364,122 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					size="sm"
 					borderRadius="full"
 					colorScheme="blue"
+					disabled={isVideoPhase || sessionPhase === "intro"}
 					onClick={startTutorial}
 				>
 					<FiInfo />
 				</IconButton>
+
+				<Box
+					position="absolute"
+					left={0}
+					right={0}
+					bottom={0}
+					zIndex={15}
+					bg="blackAlpha.700"
+					color="white"
+					px={{ base: 3, md: 4 }}
+					py={{ base: 2.5, md: 3 }}
+				>
+					<Text fontSize={{ base: "sm", md: "md" }} mb={sessionPhase === "replay" ? 3 : 0}>
+						{caption}
+					</Text>
+
+					{sessionPhase === "replay" && (
+						<HStack gap={2} flexWrap="wrap">
+							<Button
+								size="xs"
+								variant="outline"
+								colorPalette="whiteAlpha"
+								onClick={() => startVideoA("singleA", REPLAY_SWEEP_MS)}
+							>
+								Replay V1
+							</Button>
+							<Button
+								size="xs"
+								variant="outline"
+								colorPalette="whiteAlpha"
+								onClick={() => startVideoB("singleB", REPLAY_SWEEP_MS)}
+							>
+								Replay V2
+							</Button>
+							<Button
+								size="xs"
+								variant="outline"
+								colorPalette="whiteAlpha"
+								onClick={() => startVideoA("both", REPLAY_SWEEP_MS)}
+							>
+								Replay Both
+							</Button>
+							<Button
+								size="xs"
+								colorPalette="teal"
+								onClick={handleContinueFlow}
+							>
+								Continue
+							</Button>
+						</HStack>
+					)}
+				</Box>
 			</Box>
+
+			{isQuestionPhase && (
+				<Box
+					mb={6}
+					border="1px solid"
+					borderColor="gray.200"
+					borderRadius="lg"
+					p={4}
+					bg="gray.50"
+					_dark={{ bg: "gray.800", borderColor: "gray.600" }}
+				>
+					{sessionPhase === "preference" && (
+						<>
+							<Text fontSize="md" fontWeight="700" mb={3}>
+								Which version did you prefer?
+							</Text>
+							<HStack gap={2} flexWrap="wrap">
+								<Button size="sm" variant={preferredVersion === "v1" ? "solid" : "outline"} onClick={() => setPreferredVersion("v1")}>
+									Version 1
+								</Button>
+								<Button size="sm" variant={preferredVersion === "v2" ? "solid" : "outline"} onClick={() => setPreferredVersion("v2")}>
+									Version 2
+								</Button>
+								<Button size="sm" variant={preferredVersion === "same" ? "solid" : "outline"} onClick={() => setPreferredVersion("same")}>
+									No difference
+								</Button>
+							</HStack>
+						</>
+					)}
+
+					{sessionPhase === "strength" && (
+						<>
+							<Text fontSize="md" fontWeight="700" mb={3}>
+								How strong was your preference?
+							</Text>
+							<HStack gap={2} flexWrap="wrap">
+								{([1, 2, 3, 4, 5] as const).map((score) => (
+									<Button
+										key={score}
+										size="sm"
+										variant={strengthRating === score ? "solid" : "outline"}
+										onClick={() => setStrengthRating(score)}
+									>
+										{score}
+									</Button>
+								))}
+							</HStack>
+						</>
+					)}
+				</Box>
+			)}
 
 			<AudioEngine
 				scenes={scenes}
 				activeElements={activeElements}
-				isAudioAEnabled={isAudioAEnabled}
-				isAudioBEnabled={isAudioBEnabled}
 			/>
 
-			<NavigationControls onBack={onBack} onNext={onNext} />
+			<NavigationControls onBack={handleBackFlow} onNext={handleContinueFlow} />
 
 			<TutorialOverlay
 				isActive={isTutorialActive}
@@ -270,7 +488,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				onComplete={handleTutorialComplete}
 				iButtonRef={infoButtonRef}
 				dividerRef={dividerRef}
-				toggleRef={toggleRef}
 				objectRef={objectRef}
 			/>
 		</Box>

@@ -4,8 +4,6 @@ import type { SceneData } from "./types";
 interface AudioEngineProps {
   scenes: SceneData[];
   activeElements: string[];
-  isAudioAEnabled: boolean;
-  isAudioBEnabled: boolean;
 }
 
 interface ToneHandle {
@@ -16,16 +14,12 @@ interface ToneHandle {
 const AudioEngine: React.FC<AudioEngineProps> = ({
   scenes,
   activeElements,
-  isAudioAEnabled,
-  isAudioBEnabled,
 }) => {
   const contextRef = useRef<AudioContext | null>(null);
-  const bgARef = useRef<HTMLAudioElement | null>(null);
-  const bgBRef = useRef<HTMLAudioElement | null>(null);
   const sfxMapRef = useRef<Map<string, ToneHandle>>(new Map());
 
   useEffect(() => {
-    const shouldStartAudio = isAudioAEnabled || isAudioBEnabled || activeElements.length > 0;
+    const shouldStartAudio = activeElements.length > 0;
 
     if (!shouldStartAudio) {
       return;
@@ -38,46 +32,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
     if (contextRef.current.state === "suspended") {
       void contextRef.current.resume();
     }
-  }, [isAudioAEnabled, isAudioBEnabled, activeElements.length]);
-
-  useEffect(() => {
-    const sceneA = scenes.find((scene) => scene.side === "A");
-    const sceneB = scenes.find((scene) => scene.side === "B");
-
-    if (sceneA && !bgARef.current) {
-      const audio = new Audio(sceneA.audioUrl);
-      audio.loop = true;
-      audio.preload = "auto";
-      audio.volume = 0.35;
-      bgARef.current = audio;
-    }
-
-    if (sceneB && !bgBRef.current) {
-      const audio = new Audio(sceneB.audioUrl);
-      audio.loop = true;
-      audio.preload = "auto";
-      audio.volume = 0.35;
-      bgBRef.current = audio;
-    }
-
-    if (bgARef.current) {
-      if (isAudioAEnabled) {
-        void bgARef.current.play().catch(() => undefined);
-      } else {
-        bgARef.current.pause();
-        bgARef.current.currentTime = 0;
-      }
-    }
-
-    if (bgBRef.current) {
-      if (isAudioBEnabled) {
-        void bgBRef.current.play().catch(() => undefined);
-      } else {
-        bgBRef.current.pause();
-        bgBRef.current.currentTime = 0;
-      }
-    }
-  }, [isAudioAEnabled, isAudioBEnabled, scenes]);
+  }, [activeElements.length]);
 
   useEffect(() => {
     const context = contextRef.current;
@@ -133,20 +88,6 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
         tone.gain.disconnect();
       });
       sfxMapRef.current.clear();
-
-      [bgARef.current, bgBRef.current].forEach((audio) => {
-        if (!audio) {
-          return;
-        }
-
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = "";
-      });
-
-      bgARef.current = null;
-      bgBRef.current = null;
-
       if (contextRef.current) {
         void contextRef.current.close();
         contextRef.current = null;

@@ -5,6 +5,7 @@ interface DividerControlProps {
   dividerX: number;
   isInteractive?: boolean;
   isAnimating?: boolean;
+  animationDurationMs?: number;
   onDividerChange: (value: number) => void;
   dividerRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -13,6 +14,7 @@ const DividerControl: React.FC<DividerControlProps> = ({
   dividerX,
   isInteractive = true,
   isAnimating = false,
+  animationDurationMs = 1200,
   onDividerChange,
   dividerRef,
 }) => {
@@ -43,7 +45,7 @@ const DividerControl: React.FC<DividerControlProps> = ({
         pointerEvents={isInteractive ? "auto" : "none"}
         cursor={isInteractive ? "ew-resize" : "default"}
         touchAction="none"
-        transition={isAnimating ? "left 1.2s ease-in-out" : "none"}
+        transition={isAnimating ? `left ${animationDurationMs}ms ease-in-out` : "none"}
         onPointerMove={(event) => {
           if (!isDragging || !isInteractive) {
             return;

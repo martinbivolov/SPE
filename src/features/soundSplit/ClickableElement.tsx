@@ -8,9 +8,18 @@ interface ClickableElementProps {
   sceneSide: SceneSide;
   dividerX: number;
   isInteractive?: boolean;
+  shouldWiggle?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
   elementRef?: React.RefObject<HTMLDivElement | null>;
 }
+
+const attentionWiggle = keyframes`
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  20% { transform: translate(-50%, -50%) rotate(-2deg) scale(1.02); }
+  40% { transform: translate(-50%, -50%) rotate(2deg) scale(1.04); }
+  60% { transform: translate(-50%, -50%) rotate(-1deg) scale(1.03); }
+  80% { transform: translate(-50%, -50%) rotate(1deg) scale(1.01); }
+`;
 
 const shake = keyframes`
   0% { transform: translate(0, 0) rotate(0deg); }
@@ -25,6 +34,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
   sceneSide,
   dividerX,
   isInteractive = true,
+  shouldWiggle = false,
   onHoldChange,
   elementRef,
 }) => {
@@ -66,13 +76,20 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
       zIndex={5}
       opacity={isEnabled ? 1 : 0.35}
       cursor={isEnabled && isInteractive ? "grab" : "not-allowed"}
+      pointerEvents={isEnabled && isInteractive ? "auto" : "none"}
       userSelect="none"
       touchAction="none"
       onPointerDown={startHold}
       onPointerUp={stopHold}
       onPointerLeave={stopHold}
       onPointerCancel={stopHold}
-      animation={isHeld ? `${shake} 0.28s linear infinite` : "none"}
+      animation={
+        isHeld
+          ? `${shake} 0.28s linear infinite`
+          : shouldWiggle
+            ? `${attentionWiggle} 0.9s ease-in-out infinite`
+            : "none"
+      }
     >
       <Image
         src={element.imageUrl}

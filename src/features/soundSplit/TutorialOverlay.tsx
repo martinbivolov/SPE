@@ -23,7 +23,6 @@ interface TutorialOverlayProps {
   onComplete: () => void;
   iButtonRef: React.RefObject<HTMLElement | null>;
   dividerRef: React.RefObject<HTMLElement | null>;
-  toggleRef: React.RefObject<HTMLElement | null>;
   objectRef: React.RefObject<HTMLElement | null>;
 }
 
@@ -48,7 +47,6 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   onComplete,
   iButtonRef,
   dividerRef,
-  toggleRef,
   objectRef,
 }) => {
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -79,15 +77,6 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       },
       {
         id: 3,
-        title: "Audio toggle",
-        description: "Use this switch to turn that world's audio on or off.",
-        tooltipSide: "below",
-        cutoutShape: "rect",
-        targetRef: toggleRef,
-        padding: 10,
-      },
-      {
-        id: 4,
         title: "Interactive object",
         description: "Press and hold objects like this to play their sound. Release to stop.",
         tooltipSide: "above",
@@ -96,7 +85,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
         padding: 10,
       },
     ],
-    [iButtonRef, dividerRef, toggleRef, objectRef],
+    [iButtonRef, dividerRef, objectRef],
   );
 
   const activeStep = useMemo(() => steps.find((entry) => entry.id === step) ?? null, [steps, step]);
