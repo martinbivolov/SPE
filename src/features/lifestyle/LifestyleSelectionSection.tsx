@@ -1,71 +1,85 @@
-import React from "react";
-import { Box, Stack, Button, Flex, Text, SimpleGrid } from "@chakra-ui/react";
+import React, { useMemo } from 'react';
+import { Box, Stack, Button, Flex, Spinner, Text, SimpleGrid } from '@chakra-ui/react';
+import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
+import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
 
 interface LifestyleSelectionSectionProps {
   onNext: () => void;
   onBack: () => void;
-  selectedStatements: string[];
+  userId: string;
+  selectedOptionIds: string[];
   onSelectionChange: (values: string[]) => void;
 }
 
 const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
   onNext,
   onBack,
-  selectedStatements,
+  userId,
+  selectedOptionIds,
   onSelectionChange,
 }) => {
-  const questionGroups = [
-    {
-      id: "group-1",
-      title: "What Applies to You",
-      items: [
-        "Do you experience noises (ringing, buzzing, etc.) in your ears (tinnitus)?",
-        "Do you have pain or discomfort or discharge in your ears?",
-        "Have you had ear surgery or other medical problems in your ears?",
-        "Have you had any dizziness or difficulties with your balance in the last 90 days?",
-        "Do you currently wear hearing aids?",
-      ],
-    },
-    {
-      id: "group-2",
-      title: "What Applies to You",
-      items: [
-        "Are you withdrawing from conversations?",
-        "Do you feel frustrated trying to listen?",
-        "Do you avoid places because you cannot hear well?",
-        "Do you ask others to repeat?",
-        "Do you use apps on your Smartphone?",
-      ],
-    },
-    {
-      id: "group-3",
-      title: "What Matters Most to You in a Hearing Aid",
-      items: [
-        "Ease of Use",
-        "Follow-up Care/ Maintenance",
-        "Comfort",
-        "Overall Sound Quality",
-        "Style and Appearance",
-        "Cost",
-      ],
-    },
-  ];
+  const { data: groups, loading, error } = useLifestyleQuestions();
+  const { loading: saving, error: saveError, saveAnswers } = useSaveLifestyleAnswers();
 
-  const handleStatementToggle = (statement: string) => {
-    if (!statement) {
+  const questionByOption = useMemo(() => {
+    const map = new Map<string, string>();
+    groups.forEach((group) => {
+      group.lifestyle_questions.forEach((question) => {
+        question.answer_options.forEach((option) => {
+          map.set(option.id, question.id);
+        });
+      });
+    });
+    return map;
+  }, [groups]);
+
+  const handleOptionToggle = (optionId: string) => {
+    if (!optionId) {
       return;
     }
 
-    const isSelected = selectedStatements.includes(statement);
+    const isSelected = selectedOptionIds.includes(optionId);
     const updatedSelections = isSelected
-      ? selectedStatements.filter((item) => item !== statement)
-      : [...selectedStatements, statement];
+      ? selectedOptionIds.filter((item) => item !== optionId)
+      : [...selectedOptionIds, optionId];
 
     onSelectionChange(updatedSelections);
   };
 
-  const isStatementSelected = (statement: string) =>
-    selectedStatements.includes(statement);
+  const handleNext = async () => {
+    const answers = selectedOptionIds
+      .map((optionId) => ({
+        questionId: questionByOption.get(optionId),
+        answerOptionId: optionId,
+      }))
+      .filter((answer): answer is { questionId: string; answerOptionId: string } => Boolean(answer.questionId));
+
+    const ok = await saveAnswers(userId, answers);
+    if (ok) {
+      onNext();
+    }
+  };
+
+  if (loading) {
+    return (
+      <Flex direction="column" align="center" justify="center" minH="420px" gap={3}>
+        <Spinner size="lg" color="purple.500" />
+        <Text color="gray.600" _dark={{ color: 'gray.300' }}>
+          Loading lifestyle questions...
+        </Text>
+      </Flex>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={6} border="1px solid" borderColor="red.200" borderRadius="md" bg="red.50">
+        <Text color="red.600" fontWeight="600">
+          Could not load lifestyle questions: {error}
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -93,6 +107,18 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
         Everyone listens differently. Let’s understand your world.
       </Text>
 
+      {saveError && (
+        <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
+          Could not save selected answers: {saveError}
+        </Text>
+      )}
+
+      {saving && (
+        <Text mb={4} color="gray.600" _dark={{ color: 'gray.300' }} fontSize="sm">
+          Saving selected answers...
+        </Text>
+      )}
+
       <Box
         mb={8}
         border="none"
@@ -102,7 +128,7 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
         _dark={{ bg: 'gray.700' }}
       >
         <SimpleGrid columns={{ base: 1, md: 3 }} gap={{ base: 6, md: 6 }} alignItems={{ base: "start", md: "stretch" }}>
-          {questionGroups.map((group) => (
+          {groups.map((group) => (
             <Box
               key={group.id}
               border="1px solid"
@@ -127,13 +153,13 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
               </Text>
 
               <Stack gap={{ base: 3, md: 3 }}>
-                {group.items.map((statement) => {
-                  const selected = isStatementSelected(statement);
-                  const isPlaceholder = !statement;
+                {group.lifestyle_questions.map((question) =>
+                  question.answer_options.map((option) => {
+                    const selected = selectedOptionIds.includes(option.id);
 
                   return (
                     <Button
-                      key={statement || `${group.id}-placeholder`}
+                      key={option.id}
                       h="auto"
                       minH="44px"
                       py={{ base: 2.5, md: 2 }}
@@ -150,20 +176,16 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
                       bg={selected ? "green.300" : "gray.200"}
                       color={selected ? "green.800" : "gray.600"}
                       _hover={{
-                        bg: isPlaceholder
-                          ? "gray.200"
-                          : selected
-                            ? "green.300"
-                            : "gray.300",
+                        bg: selected ? "green.300" : "gray.300",
                       }}
-                      disabled={isPlaceholder}
-                      cursor={isPlaceholder ? "default" : "pointer"}
-                      onClick={() => handleStatementToggle(statement)}
+                      cursor="pointer"
+                      onClick={() => handleOptionToggle(option.id)}
                     >
-                      {statement || " "}
+                      {option.label}
                     </Button>
                   );
-                })}
+                  })
+                )}
               </Stack>
             </Box>
           ))}
@@ -174,7 +196,7 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
         <Button variant="outline" colorPalette="purple" onClick={onBack}>
           Back
         </Button>
-        <Button colorPalette="purple" onClick={onNext}>
+        <Button colorPalette="purple" loading={saving} onClick={() => void handleNext()}>
           Next
         </Button>
       </Flex>

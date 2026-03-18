@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Stack,
@@ -8,16 +8,33 @@ import {
   Text,
   NativeSelect,
 } from "@chakra-ui/react";
+import { useSaveBackgroundInfo } from '../../hooks/useSaveBackgroundInfo';
 
 interface LifestyleQuestionsProps {
   onNext: () => void;
   onBack: () => void;
+  userId: string;
 }
 
 const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
   onNext,
   onBack,
+  userId,
 }) => {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const { loading, error, saveBackgroundInfo } = useSaveBackgroundInfo();
+
+  const setAnswer = (key: string, value: string) => {
+    setAnswers((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const handleNext = async () => {
+    const ok = await saveBackgroundInfo(userId, answers);
+    if (ok) {
+      onNext();
+    }
+  };
+
   return (
     <Box
       maxW="800px"
@@ -36,6 +53,12 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
       <Text fontSize="lg" fontWeight="bold" textAlign="center" mb={6} color="gray.800" _dark={{ color: 'gray.100' }}>
         Lifestyle Exploration
       </Text>
+
+      {error && (
+        <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
+          Could not save background information: {error}
+        </Text>
+      )}
 
       <Box
         flex="1"
@@ -67,8 +90,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               Is there a history of hearing loss in your family?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.family_history ?? ''} onChange={(event) => setAnswer('family_history', event.target.value)}>
+                <option value="" disabled></option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </NativeSelect.Field>
@@ -80,8 +103,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
              Have you ever experienced loud noise for an extended period of time?
             </Text>
            <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.extended_noise_exposure ?? ''} onChange={(event) => setAnswer('extended_noise_exposure', event.target.value)}>
+                <option value="" disabled></option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </NativeSelect.Field>
@@ -93,10 +116,12 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
              If yes where:
             </Text>
            <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+              <NativeSelect.Field value={answers.noise_exposure_where ?? ''} onChange={(event) => setAnswer('noise_exposure_where', event.target.value)}>
+                <option value="" disabled></option>
+                <option value="workplace">Workplace</option>
+                <option value="military">Military service</option>
+                <option value="music">Music or concerts</option>
+                <option value="other">Other</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
@@ -110,6 +135,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               w="100%"
               variant="outline"
               placeholder="e.g., Hypertension, Diabetes, etc."
+              value={answers.medical_conditions ?? ''}
+              onChange={(event) => setAnswer('medical_conditions', event.target.value)}
             />
           </Box>
 
@@ -118,8 +145,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               Do you currently wear hearing aids?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.wearing_hearing_aids ?? ''} onChange={(event) => setAnswer('wearing_hearing_aids', event.target.value)}>
+                <option value="" disabled></option>
                 <option value="currently">Currently Wearing</option>
                 <option value="notWearing">Not Wearing</option>
                 <option value="previouslyWore">Previously Wore</option>
@@ -135,6 +162,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               w="100%"
               variant="outline"
               placeholder="e.g., 3 months, 1 year, etc."
+              value={answers.hearing_aids_duration ?? ''}
+              onChange={(event) => setAnswer('hearing_aids_duration', event.target.value)}
             />
           </Box>
 
@@ -143,8 +172,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               If yes, describe your experience with current hearing aids 
             </Text>
             <NativeSelect.Root>
-                <NativeSelect.Field>
-                    <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.hearing_aid_experience ?? ''} onChange={(event) => setAnswer('hearing_aid_experience', event.target.value)}>
+                <option value="" disabled></option>
                         <option value="currently">Satfisfied</option>
                         <option value="notWearing">Hate It</option>
                         <option value="previouslyWore">Meh</option>
@@ -157,8 +186,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               If you use a SMART (cell) phone, what type of phone?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.phone_type ?? ''} onChange={(event) => setAnswer('phone_type', event.target.value)}>
+                <option value="" disabled></option>
                 <option value="currently">Android</option>
                 <option value="notWearing">Apple</option>
                 <option value="previouslyWore">Don't know </option>
@@ -171,8 +200,8 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               If new hearing aids are recommended, are you ready to move forward today
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field>
-                <option value="" disabled selected></option>
+              <NativeSelect.Field value={answers.ready_to_move_forward ?? ''} onChange={(event) => setAnswer('ready_to_move_forward', event.target.value)}>
+                <option value="" disabled></option>
                 <option value="currently">Yes</option>
                 <option value="notWearing">No</option>
                 <option value="previouslyWore">Not sure </option>
@@ -189,7 +218,7 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
         <Button variant="outline" colorPalette="purple" onClick={onBack}>
           Back
         </Button>
-        <Button colorPalette="purple" onClick={onNext}>
+        <Button colorPalette="purple" loading={loading} onClick={() => void handleNext()}>
           Next
         </Button>
       </Flex>

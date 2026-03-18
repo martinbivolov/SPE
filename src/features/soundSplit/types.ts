@@ -15,10 +15,10 @@ export interface SceneElement {
   id: string;
   label: string;
   imageUrl: string;
+  sfxUrl: string;
   x: number;
   y: number;
   size: number;
-  sfxFrequency: number;
 }
 
 export interface SceneData {

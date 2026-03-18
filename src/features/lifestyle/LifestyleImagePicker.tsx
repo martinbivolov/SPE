@@ -1,9 +1,12 @@
-import React from "react";
-import { Box, Button, Flex, Image, SimpleGrid, Text } from "@chakra-ui/react";
+import React, { useEffect } from 'react';
+import { Box, Button, Flex, Image, SimpleGrid, Spinner, Text } from '@chakra-ui/react';
+import { useImagePickerOptions } from '../../hooks/useImagePickerOptions';
+import { useSaveImagePick } from '../../hooks/useSaveImagePick';
 
 interface LifestyleImagePickerProps {
   onNext: () => void;
   onBack: () => void;
+  userId: string;
   selectedImages: string[];
   onSelectionChange: (values: string[]) => void;
 }
@@ -11,26 +14,70 @@ interface LifestyleImagePickerProps {
 const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
   onNext,
   onBack,
+  userId,
   selectedImages,
   onSelectionChange,
 }) => {
-  const imageOptions = [
-    { id: "one-on-one", label: "At Home Daily Sounds", src: "/PickYourStyle/AtHomeDailySounds.png" },
-    { id: "small-group", label: "Public Space Shopping", src: "/PickYourStyle/PublicSpacesShopping.png" },
-    { id: "large-group", label: "Outdoor Nature", src: "/PickYourStyle/OutdoorNature.png" },
-    { id: "restaurants", label: "In The Car", src: "/PickYourStyle/InTheCar.png" },
-    { id: "workplace", label: "Phone Call", src: "/PickYourStyle/PhoneCall.png" },
-    { id: "music", label: "Listening To Music", src: "/PickYourStyle/MusicListening.png" },
-  ];
+  const { data: options, loading, error } = useImagePickerOptions();
+  const {
+    loading: saveLoading,
+    error: saveError,
+    initializeUserTagWeights,
+    savePick,
+  } = useSaveImagePick();
 
-  const handleToggle = (id: string) => {
+  useEffect(() => {
+    void initializeUserTagWeights(userId);
+  }, [initializeUserTagWeights, userId]);
+
+  const handleToggle = async (id: string) => {
+    const pickedOption = options.find((option) => option.id === id);
+    if (!pickedOption) {
+      return;
+    }
+
+    const priorSelectedId = selectedImages[selectedImages.length - 1];
+    const rejectedOption = options.find((option) => option.id === priorSelectedId);
+
     const isSelected = selectedImages.includes(id);
     const updated = isSelected
       ? selectedImages.filter((item) => item !== id)
       : [...selectedImages, id];
 
     onSelectionChange(updated);
+
+    if (!isSelected && rejectedOption && rejectedOption.id !== pickedOption.id) {
+      await savePick(
+        userId,
+        pickedOption.id,
+        rejectedOption.id,
+        pickedOption.tag_id,
+        rejectedOption.tag_id,
+        pickedOption.weight
+      );
+    }
   };
+
+  if (loading) {
+    return (
+      <Flex direction="column" align="center" justify="center" minH="420px" gap={3}>
+        <Spinner size="lg" color="purple.500" />
+        <Text color="gray.600" _dark={{ color: 'gray.300' }}>
+          Loading image options...
+        </Text>
+      </Flex>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={6} border="1px solid" borderColor="red.200" borderRadius="md" bg="red.50">
+        <Text color="red.600" fontWeight="600">
+          Could not load image options: {error}
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -51,15 +98,27 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
         What about your daily life?
       </Text>
 
+      {saveError && (
+        <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
+          Could not save your last pick: {saveError}
+        </Text>
+      )}
+
+      {saveLoading && (
+        <Text mb={4} color="gray.600" _dark={{ color: 'gray.300' }} fontSize="sm">
+          Saving your pick...
+        </Text>
+      )}
+
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4} mb={8}>
-        {imageOptions.map((option) => {
+        {options.map((option) => {
           const selected = selectedImages.includes(option.id);
 
           return (
             <Box
               key={option.id}
               as="button"
-              onClick={() => handleToggle(option.id)}
+              onClick={() => void handleToggle(option.id)}
               position="relative"
               overflow="hidden"
               borderRadius="md"
@@ -70,7 +129,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
               _hover={{ boxShadow: "md" }}
               _focusVisible={{ outline: "2px solid", outlineColor: "purple.400" }}
             >
-              <Image src={option.src} alt={option.label} w="100%" h={{ base: "170px", md: "200px" }} objectFit="cover" />
+              <Image src={option.image_url} alt={option.label} w="100%" h={{ base: "170px", md: "200px" }} objectFit="cover" />
               <Box
                 position="absolute"
                 inset={0}
