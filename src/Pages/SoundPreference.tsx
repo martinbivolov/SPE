@@ -99,7 +99,7 @@ const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted }
             <Flex direction="column" align="center" justify="center" gap={3}>
               <Spinner size="lg" color="purple.500" />
               <Text color="gray.600" _dark={{ color: 'gray.300' }}>
-                Matching your best scene...
+                ur best scene...
               </Text>
             </Flex>
           )}

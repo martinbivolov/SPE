@@ -95,14 +95,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [onEnded, src]);
 
   return (
-    <Box position="absolute" inset={0} zIndex={3} bg="black">
+    <Box position="absolute" inset={0} zIndex={3} bg="black" w="100%" h="100%">
       <video
         ref={videoRef}
         src={src}
         preload="auto"
         playsInline
         muted={isMuted}
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
       />
 
       <IconButton

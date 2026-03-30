@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, isOpen, onClose, onOpen }
         top={0}
         zIndex={100}
         style={{
-          background: 'linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%)',
+          background: 'linear-gradient(135deg, #7000FF 0%, #7000FF 100%)',
         }}
       >
         {/* Logo */}
@@ -73,13 +73,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, isOpen, onClose, onOpen }
           justifyContent="center"
           w="50px"
           h="50px"
-          bg="rgba(255, 255, 255, 0.2)"
           mb={8}
           fontSize="2xl"
           fontWeight="bold"
           color="white"
         >
-          SP
+        
         </Box>
 
         <Stack gap={3} align="stretch">

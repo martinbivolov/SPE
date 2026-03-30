@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, HStack, IconButton, Text } from '@chakra-ui/react';
+import { Box, IconButton, Text } from '@chakra-ui/react';
 import { FiInfo } from 'react-icons/fi';
 import SceneA from './SceneA';
 import SceneB from './SceneB';
@@ -8,6 +8,7 @@ import AudioEngine from './AudioEngine';
 import NavigationControls from './NavigationControls';
 import TutorialOverlay from './TutorialOverlay';
 import VideoPlayer from './VideoPlayer';
+import { PreferenceModal, ReplayOptionsModal, StrengthModal } from './PreferenceModals';
 import type { SessionConfig, SessionPhase } from './types';
 
 interface SoundPreferenceSplitScreenProps {
@@ -47,7 +48,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const [tutorialStep, setTutorialStep] = useState(1);
 	const [preferredVersion, setPreferredVersion] = useState<'A' | 'B' | null>(null);
 	const [strengthRating, setStrengthRating] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
-	const [formError, setFormError] = useState<string | null>(null);
 
 	const infoButtonRef = useRef<HTMLButtonElement | null>(null);
 	const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -59,7 +59,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const scenes = useMemo(() => [sceneA, sceneB], [sceneA, sceneB]);
 	const isVideoPhase = sessionPhase === 'videoA' || sessionPhase === 'videoB';
 	const isInteractivePhase = sessionPhase === 'replay' || sessionPhase === 'exploration';
-	const isQuestionPhase = sessionPhase === 'preference' || sessionPhase === 'strength';
 	const canInteractWithScene = isInteractivePhase && !isTutorialActive && objectsInteractive;
 
 	const clearTimers = useCallback(() => {
@@ -173,7 +172,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		setIsTutorialActive(false);
 		setPreferredVersion(null);
 		setStrengthRating(null);
-		setFormError(null);
 
 		setSessionPhase('intro');
 		setCaption('In this adventure you will first watch Version 1.');
@@ -235,50 +233,17 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			return;
 		}
 
-		if (sessionPhase === 'preference') {
-			if (!preferredVersion) {
-				setFormError('Choose Version 1 or Version 2 before continuing.');
-				return;
-			}
-
-			setFormError(null);
-			setSessionPhase('strength');
-			setCaption('How strong was that preference?');
-			return;
-		}
-
-		if (sessionPhase === 'strength') {
-			if (!preferredVersion || !strengthRating) {
-				setFormError('Select your preferred version and a strength rating to continue.');
-				return;
-			}
-
-			setFormError(null);
-			const saved = await onSubmitPreference(preferredVersion, strengthRating);
-			if (!saved) {
-				return;
-			}
-
-			setSessionPhase('exploration');
-			setCaption('Explore the scene and interact with objects.');
-			setWiggleObjects(false);
-			setObjectsInteractive(true);
-			return;
-		}
-
 		if (sessionPhase === 'exploration') {
 			onNext();
 		}
 	};
 
-	const handleBackFlow = () => {
-		if (sessionPhase === 'strength') {
-			setFormError(null);
-			setSessionPhase('preference');
-			setCaption('Which version did you prefer?');
-			return;
-		}
+	const handleSkipReplay = () => {
+		setSessionPhase('preference');
+		setCaption('Which version did you prefer?');
+	};
 
+	const handleBackFlow = () => {
 		if (sessionPhase === 'exploration') {
 			setSessionPhase('strength');
 			setCaption('How strong was that preference?');
@@ -306,23 +271,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			boxShadow="md"
 			display="flex"
 			flexDirection="column"
-			minH="calc(100vh - 220px)"
 		>
-			<Text
-				fontSize={{ base: '2xl', md: '4xl' }}
-				fontWeight="700"
-				textAlign="center"
-				color="gray.800"
-				_dark={{ color: 'gray.100' }}
-				mb={2}
-			>
-				Sound Preference Exploration
-			</Text>
-			<Text fontSize={{ base: 'sm', md: 'md' }} textAlign="center" color="gray.600" _dark={{ color: 'gray.300' }} mb={6}>
-				Watch both versions, then explore the scene
-			</Text>
-
-			<Box position="relative" borderRadius="lg" overflow="hidden" bg="black" minH={{ base: '380px', md: '520px' }} mb={6}>
+			<Box position="relative" borderRadius="lg" overflow="hidden" bg="black" h="calc(100vh - 220px)" mb={6}>
 				{!isVideoPhase && (
 					<>
 						<SceneA
@@ -405,80 +355,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					<Text fontSize={{ base: 'sm', md: 'md' }} mb={sessionPhase === 'replay' ? 3 : 0}>
 						{caption}
 					</Text>
-
-					{sessionPhase === 'replay' && (
-						<HStack gap={2} flexWrap="wrap">
-							<Button size="xs" variant="outline" colorPalette="whiteAlpha" onClick={() => startVideoA('singleA', REPLAY_SWEEP_MS)}>
-								Replay V1
-							</Button>
-							<Button size="xs" variant="outline" colorPalette="whiteAlpha" onClick={() => startVideoB('singleB', REPLAY_SWEEP_MS)}>
-								Replay V2
-							</Button>
-							<Button size="xs" variant="outline" colorPalette="whiteAlpha" onClick={() => startVideoA('both', REPLAY_SWEEP_MS)}>
-								Replay Both
-							</Button>
-							<Button size="xs" colorPalette="teal" onClick={() => void handleContinueFlow()}>
-								Continue
-							</Button>
-						</HStack>
-					)}
 				</Box>
 			</Box>
-
-			{isQuestionPhase && (
-				<Box
-					mb={6}
-					border="1px solid"
-					borderColor="gray.200"
-					borderRadius="lg"
-					p={4}
-					bg="gray.50"
-					_dark={{ bg: 'gray.800', borderColor: 'gray.600' }}
-				>
-					{sessionPhase === 'preference' && (
-						<>
-							<Text fontSize="md" fontWeight="700" mb={3}>
-								Which version did you prefer?
-							</Text>
-							<HStack gap={2} flexWrap="wrap">
-								<Button size="sm" variant={preferredVersion === 'A' ? 'solid' : 'outline'} onClick={() => setPreferredVersion('A')}>
-									Version 1
-								</Button>
-								<Button size="sm" variant={preferredVersion === 'B' ? 'solid' : 'outline'} onClick={() => setPreferredVersion('B')}>
-									Version 2
-								</Button>
-							</HStack>
-						</>
-					)}
-
-					{sessionPhase === 'strength' && (
-						<>
-							<Text fontSize="md" fontWeight="700" mb={3}>
-								How strong was your preference?
-							</Text>
-							<HStack gap={2} flexWrap="wrap">
-								{([1, 2, 3, 4, 5] as const).map((score) => (
-									<Button key={score} size="sm" variant={strengthRating === score ? 'solid' : 'outline'} onClick={() => setStrengthRating(score)}>
-										{score}
-									</Button>
-								))}
-							</HStack>
-						</>
-					)}
-
-					{(formError || submitError) && (
-						<Text mt={3} color="red.500" fontSize="sm" fontWeight="600">
-							{formError ?? submitError}
-						</Text>
-					)}
-
-					{isSubmittingPreference && (
-						<Text mt={3} color="gray.600" _dark={{ color: 'gray.300' }} fontSize="sm">
-							Saving your preference...
-						</Text>
-					)}
-				</Box>
-			)}
 
 			<AudioEngine scenes={scenes} activeElements={activeElements} />
 
@@ -492,6 +370,42 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				iButtonRef={infoButtonRef}
 				dividerRef={dividerRef}
 				objectRef={objectRef}
+			/>
+
+			<PreferenceModal
+				isOpen={sessionPhase === 'preference'}
+				selectedVersion={preferredVersion}
+				onSelect={(version) => {
+					setPreferredVersion(version);
+					setSessionPhase('strength');
+					setCaption('How strong was that preference?');
+				}}
+			/>
+
+			<StrengthModal
+				isOpen={sessionPhase === 'strength'}
+				preferredVersion={preferredVersion}
+				selectedStrength={strengthRating}
+				onSubmit={async (strength) => {
+					setStrengthRating(strength);
+					if (!preferredVersion) return;
+					const saved = await onSubmitPreference(preferredVersion, strength);
+					if (!saved) return;
+					setSessionPhase('exploration');
+					setCaption('Explore the scene and interact with objects.');
+					setWiggleObjects(false);
+					setObjectsInteractive(true);
+				}}
+				isSubmitting={isSubmittingPreference}
+				submitError={submitError}
+			/>
+
+			<ReplayOptionsModal
+				isOpen={sessionPhase === 'replay'}
+				onReplayFirst={() => startVideoA('singleA', REPLAY_SWEEP_MS)}
+				onReplaySecond={() => startVideoB('singleB', REPLAY_SWEEP_MS)}
+				onReplayBoth={() => startVideoA('both', REPLAY_SWEEP_MS)}
+				onSkipReplay={handleSkipReplay}
 			/>
 		</Box>
 	);
