@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
-import { Box, Stack, Button, Flex, Spinner, Text, SimpleGrid } from '@chakra-ui/react';
+import { Box, Button, Flex, Spinner, Stack, Text } from '@chakra-ui/react';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
+import QuotesQuestion from './QuotesQuestion';
+import type { LifestyleQuestion } from '../../types/supabase.types';
 
 interface LifestyleSelectionSectionProps {
   onNext: () => void;
@@ -24,13 +26,25 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
   const questionByOption = useMemo(() => {
     const map = new Map<string, string>();
     groups.forEach((group) => {
-      group.lifestyle_questions.forEach((question) => {
-        question.answer_options.forEach((option) => {
+      group.lifestyle_questions?.forEach((question) => {
+        question.answer_options?.forEach((option) => {
           map.set(option.id, question.id);
         });
       });
     });
     return map;
+  }, [groups]);
+
+  // Only quotes-type questions are rendered here; single/multi questions are
+  // handled in the previous step (SoundPreferenceQuestions) as dropdowns.
+  const quotesQuestions = useMemo(() => {
+    const quotes: LifestyleQuestion[] = [];
+    groups.forEach((group) => {
+      (group.lifestyle_questions ?? []).forEach((q) => {
+        if (q.type === 'quotes') quotes.push(q);
+      });
+    });
+    return quotes;
   }, [groups]);
 
   const handleOptionToggle = (optionId: string) => {
@@ -119,78 +133,27 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
         </Text>
       )}
 
-      <Box
-        mb={8}
-        border="none"
-        borderRadius="md"
-        p={{ base: 4, md: 7 }}
-        bg="gray.100"
-        _dark={{ bg: 'gray.700' }}
-      >
-        <SimpleGrid columns={{ base: 1, md: 3 }} gap={{ base: 6, md: 6 }} alignItems={{ base: "start", md: "stretch" }}>
-          {groups.map((group) => (
-            <Box
-              key={group.id}
-              border="1px solid"
-              borderColor="gray.200"
-              _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
-              borderRadius="md"
-              p={{ base: 4, md: 5 }}
-              bg="gray.50"
-              overflow="hidden"
-            >
-              <Text
-                textAlign="center"
-                color={{ base: "gray.600", md: "gray.400" }}
-                _dark={{ color: 'gray.200' }}
-                fontSize={{ base: "lg", md: "2xl" }}
-                fontWeight="500"
-                mb={{ base: 4, md: 6 }}
-                lineHeight="1.2"
-                minH={{ base: "auto", md: "76px" }}
-              >
-                {group.title}
-              </Text>
-
-              <Stack gap={{ base: 3, md: 3 }}>
-                {group.lifestyle_questions.map((question) =>
-                  question.answer_options.map((option) => {
-                    const selected = selectedOptionIds.includes(option.id);
-
-                  return (
-                    <Button
-                      key={option.id}
-                      h="auto"
-                      minH="44px"
-                      py={{ base: 2.5, md: 2 }}
-                      fontSize={{ base: "14px", md: "13px" }}
-                      fontWeight="500"
-                      whiteSpace="normal"
-                      lineHeight="1.35"
-                      wordBreak="break-word"
-                      textAlign="center"
-                      px={3}
-                      borderRadius="sm"
-                      border="1px solid"
-                      borderColor={selected ? "green.400" : "gray.300"}
-                      bg={selected ? "green.300" : "gray.200"}
-                      color={selected ? "green.800" : "gray.600"}
-                      _hover={{
-                        bg: selected ? "green.300" : "gray.300",
-                      }}
-                      cursor="pointer"
-                      onClick={() => handleOptionToggle(option.id)}
-                    >
-                      {option.label}
-                    </Button>
-                  );
-                  })
-                )}
-              </Stack>
-            </Box>
-          ))}
-        </SimpleGrid>
-      </Box>
+      {/* ── Quotes questions — full-width speech-bubble grid ──────────────── */}
+      {quotesQuestions.length > 0 && (
+        <Box
+          mb={8}
+          borderRadius="md"
+          p={{ base: 4, md: 7 }}
+          bg="gray.100"
+          _dark={{ bg: 'gray.700' }}
+        >
+          <Stack gap={{ base: 10, md: 12 }}>
+            {quotesQuestions.map((question) => (
+              <QuotesQuestion
+                key={question.id}
+                question={question}
+                selectedOptionIds={selectedOptionIds}
+                onToggle={handleOptionToggle}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
 
       <Flex justify="flex-end" gap={3}>
         <Button variant="outline" colorPalette="purple" onClick={onBack}>

@@ -1,14 +1,15 @@
 export type SceneSide = "A" | "B";
 
 export type SessionPhase =
-  | "intro"
+  | "story-intro"
+  | "scene-narration"
   | "videoA"
   | "videoB"
   | "replay"
   | "preference"
   | "strength"
-  | "tutorial"
   | "exploration"
+  | "filler"
   | "complete";
 
 export interface SceneElement {
@@ -32,7 +33,3 @@ export interface SceneData {
   elements: SceneElement[];
 }
 
-export interface SessionConfig {
-  sceneA: SceneData;
-  sceneB: SceneData;
-}

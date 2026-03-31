@@ -25,7 +25,7 @@ export const useSaveImagePick = (): SaveImagePickResult => {
 		setLoading(true);
 		setError(null);
 
-		const { error: initError } = await supabase.rpc('initialize_user_tag_weights', { uid: userId });
+		const { error: initError } = await supabase.rpc('initialize_user_tag_weights', { p_user_id: userId });
 		setLoading(false);
 
 		if (initError) {
@@ -63,9 +63,9 @@ export const useSaveImagePick = (): SaveImagePickResult => {
 		}
 
 		const { error: chosenError } = await supabase.rpc('increment_user_tag', {
-			uid: userId,
-			tid: chosenTagId,
-			amount: weight,
+			p_user_id: userId,
+			p_tag_id: chosenTagId,
+			p_amount: weight,
 		});
 
 		if (chosenError) {
@@ -76,9 +76,9 @@ export const useSaveImagePick = (): SaveImagePickResult => {
 		}
 
 		const { error: rejectedError } = await supabase.rpc('increment_user_tag', {
-			uid: userId,
-			tid: rejectedTagId,
-			amount: -1,
+			p_user_id: userId,
+			p_tag_id: rejectedTagId,
+			p_amount: -1,
 		});
 
 		setLoading(false);

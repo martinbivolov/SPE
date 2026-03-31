@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, IconButton, Text } from '@chakra-ui/react';
+import { Box, Circle, Flex, HStack, IconButton, Text } from '@chakra-ui/react';
 import { FiInfo } from 'react-icons/fi';
 import SceneA from './SceneA';
 import SceneB from './SceneB';
@@ -9,15 +9,16 @@ import NavigationControls from './NavigationControls';
 import TutorialOverlay from './TutorialOverlay';
 import VideoPlayer from './VideoPlayer';
 import { PreferenceModal, ReplayOptionsModal, StrengthModal } from './PreferenceModals';
-import type { SessionConfig, SessionPhase } from './types';
+import type { SceneData, SessionPhase } from './types';
+import type { LoadedStory } from '../../hooks/useStoryRecommendation';
+import { useSaveSessionResult } from '../../hooks/useSaveSessionResult';
+import { supabase } from '../../lib/supabase';
 
 interface SoundPreferenceSplitScreenProps {
+	userId: string;
+	story: LoadedStory;
 	onBack: () => void;
 	onNext: () => void;
-	sessionConfig: SessionConfig;
-	onSubmitPreference: (preferredVersion: 'A' | 'B', preferenceStrength: number) => Promise<boolean>;
-	isSubmittingPreference?: boolean;
-	submitError?: string | null;
 }
 
 const SWEEP_MS = 600;
@@ -26,20 +27,19 @@ const REPLAY_SWEEP_MS = 400;
 type SequenceMode = 'intro' | 'singleA' | 'singleB' | 'both';
 
 const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
+	userId,
+	story,
 	onBack,
 	onNext,
-	sessionConfig,
-	onSubmitPreference,
-	isSubmittingPreference = false,
-	submitError,
 }) => {
+	const [sceneIndex, setSceneIndex] = useState(0);
 	const [dividerX, setDividerX] = useState(50);
 	const [dividerAnimationMs, setDividerAnimationMs] = useState(SWEEP_MS);
 	const [isDividerAnimating, setIsDividerAnimating] = useState(false);
 	const [activeElements, setActiveElements] = useState<string[]>([]);
-	const [sessionPhase, setSessionPhase] = useState<SessionPhase>('intro');
-	const [caption, setCaption] = useState('In this adventure you will first watch Version 1.');
-	const [videoSrc, setVideoSrc] = useState(sessionConfig.sceneA.videoUrl);
+	const [sessionPhase, setSessionPhase] = useState<SessionPhase>('story-intro');
+	const [caption, setCaption] = useState('');
+	const [videoSrc, setVideoSrc] = useState('');
 	const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 	const [sequenceMode, setSequenceMode] = useState<SequenceMode>('intro');
 	const [objectsInteractive, setObjectsInteractive] = useState(false);
@@ -53,28 +53,86 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const dividerRef = useRef<HTMLDivElement | null>(null);
 	const objectRef = useRef<HTMLDivElement | null>(null);
 	const timeoutIdsRef = useRef<number[]>([]);
+	const hasPlayedIntro = useRef(false);
 
-	const sceneA = useMemo(() => sessionConfig.sceneA, [sessionConfig.sceneA]);
-	const sceneB = useMemo(() => sessionConfig.sceneB, [sessionConfig.sceneB]);
+	const { saveResult, loading: resultLoading, error: resultError } = useSaveSessionResult();
+
+	const currentScene = story.scenes[sceneIndex] ?? null;
+	const currentVersion = currentScene?.version ?? null;
+
+	const sceneA = useMemo<SceneData>(() => ({
+		id: `${currentVersion?.id ?? 'none'}-a`,
+		side: 'A',
+		name: `${currentScene?.name ?? ''} - Version 1`,
+		backgroundImageUrl: currentVersion?.background_image_url ?? '',
+		audioLabel: 'Version 1',
+		audioUrl: currentVersion?.video_a_url ?? '',
+		videoUrl: currentVersion?.video_a_url ?? '',
+		elements: currentVersion?.interactive_enabled
+			? (currentVersion.scene_objects ?? []).map((obj) => ({
+					id: `a-${obj.id}`,
+					label: obj.label,
+					imageUrl: obj.image_url,
+					sfxUrl: obj.sfx_url,
+					x: obj.x,
+					y: obj.y,
+					size: obj.size,
+				}))
+			: [],
+	}), [currentScene?.name, currentVersion]);
+
+	const sceneB = useMemo<SceneData>(() => ({
+		id: `${currentVersion?.id ?? 'none'}-b`,
+		side: 'B',
+		name: `${currentScene?.name ?? ''} - Version 2`,
+		backgroundImageUrl: currentVersion?.background_image_url ?? '',
+		audioLabel: 'Version 2',
+		audioUrl: currentVersion?.video_b_url ?? '',
+		videoUrl: currentVersion?.video_b_url ?? '',
+		elements: currentVersion?.interactive_enabled
+			? (currentVersion.scene_objects ?? []).map((obj) => ({
+					id: `b-${obj.id}`,
+					label: obj.label,
+					imageUrl: obj.image_url,
+					sfxUrl: obj.sfx_url,
+					x: obj.x,
+					y: obj.y,
+					size: obj.size,
+				}))
+			: [],
+	}), [currentScene?.name, currentVersion]);
+
 	const scenes = useMemo(() => [sceneA, sceneB], [sceneA, sceneB]);
+
 	const isVideoPhase = sessionPhase === 'videoA' || sessionPhase === 'videoB';
+	const isNarrationPhase =
+		sessionPhase === 'story-intro' ||
+		sessionPhase === 'scene-narration' ||
+		sessionPhase === 'filler';
 	const isInteractivePhase = sessionPhase === 'replay' || sessionPhase === 'exploration';
 	const canInteractWithScene = isInteractivePhase && !isTutorialActive && objectsInteractive;
 
+	// All media (narration audio + scene videos) routes through the single VideoPlayer.
+	// This ensures handleVideoEnded can chain phases in the correct order without overlap.
+	const isPlayerActive = isVideoPhase || isNarrationPhase;
+
 	const clearTimers = useCallback(() => {
-		timeoutIdsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+		timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
 		timeoutIdsRef.current = [];
 	}, []);
 
 	const schedule = useCallback((delayMs: number, callback: () => void) => {
-		const timeoutId = window.setTimeout(callback, delayMs);
-		timeoutIdsRef.current.push(timeoutId);
+		const id = window.setTimeout(callback, delayMs);
+		timeoutIdsRef.current.push(id);
 	}, []);
 
-	const preloadInteractiveImage = useCallback(() => {
-		const image = new Image();
-		image.src = sceneA.backgroundImageUrl;
-	}, [sceneA.backgroundImageUrl]);
+	// Play a src through the VideoPlayer: stop first, then start after a tick
+	// so the VideoPlayer element re-mounts / resets before playing the new src.
+	const playSrc = useCallback((src: string) => {
+		setIsVideoPlaying(false);
+		setVideoSrc(src);
+		schedule(50, () => setIsVideoPlaying(true));
+	}, [schedule]);
 
 	const animateDividerTo = useCallback(
 		(targetX: number, durationMs: number, onDone: () => void) => {
@@ -86,7 +144,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				onDone();
 			});
 		},
-		[schedule]
+		[schedule],
 	);
 
 	const beginWiggleWindow = useCallback(() => {
@@ -98,15 +156,11 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		});
 	}, [schedule]);
 
-	const snapToInteractiveReplay = useCallback(() => {
-		setIsVideoPlaying(false);
-		setSessionPhase('replay');
-		setCaption('Replay options: Version 1, Version 2, or both.');
-		setDividerX(50);
-		setActiveElements([]);
-		setIsTutorialActive(false);
-		beginWiggleWindow();
-	}, [beginWiggleWindow]);
+	const preloadInteractiveImage = useCallback(() => {
+		if (!currentVersion?.background_image_url) return;
+		const img = new Image();
+		img.src = currentVersion.background_image_url;
+	}, [currentVersion?.background_image_url]);
 
 	const startVideoA = useCallback(
 		(mode: SequenceMode, sweepDurationMs: number) => {
@@ -114,12 +168,11 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			setIsVideoPlaying(false);
 			animateDividerTo(100, sweepDurationMs, () => {
 				setSessionPhase('videoA');
-				setVideoSrc(sceneA.videoUrl);
 				setCaption('Watch Version 1');
-				setIsVideoPlaying(true);
+				playSrc(sceneA.videoUrl);
 			});
 		},
-		[animateDividerTo, sceneA.videoUrl]
+		[animateDividerTo, playSrc, sceneA.videoUrl],
 	);
 
 	const startVideoB = useCallback(
@@ -130,65 +183,81 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			preloadInteractiveImage();
 			animateDividerTo(0, sweepDurationMs, () => {
 				setSessionPhase('videoB');
-				setVideoSrc(sceneB.videoUrl);
-				setIsVideoPlaying(true);
+				playSrc(sceneB.videoUrl);
 			});
 		},
-		[animateDividerTo, preloadInteractiveImage, sceneB.videoUrl]
+		[animateDividerTo, preloadInteractiveImage, playSrc, sceneB.videoUrl],
 	);
 
-	const handleHoldChange = (elementId: string, isHeld: boolean) => {
-		setActiveElements((previous) => {
-			if (isHeld) {
-				if (previous.includes(elementId)) {
-					return previous;
-				}
-				return [...previous, elementId];
-			}
-			return previous.filter((entry) => entry !== elementId);
-		});
-	};
-
-	useEffect(() => {
-		if (!isTutorialActive || !isInteractivePhase) {
-			return;
-		}
-		setActiveElements([]);
-	}, [isInteractivePhase, isTutorialActive]);
-
-	useEffect(() => {
-		if (sessionPhase !== 'videoB') {
-			return;
-		}
-		preloadInteractiveImage();
-	}, [preloadInteractiveImage, sessionPhase]);
-
-	useEffect(() => {
-		clearTimers();
-		setActiveElements([]);
-		setDividerX(50);
-		setIsDividerAnimating(false);
+	const snapToInteractiveReplay = useCallback(() => {
 		setIsVideoPlaying(false);
+		setSessionPhase('replay');
+		setCaption('Replay options: Version 1, Version 2, or both.');
+		setDividerX(50);
+		setActiveElements([]);
 		setIsTutorialActive(false);
-		setPreferredVersion(null);
-		setStrengthRating(null);
+		beginWiggleWindow();
+	}, [beginWiggleWindow]);
 
-		setSessionPhase('intro');
-		setCaption('In this adventure you will first watch Version 1.');
-		setObjectsInteractive(false);
-		setWiggleObjects(false);
-		setVideoSrc(sceneA.videoUrl);
+	// ── Step functions — defined before handleVideoEnded so they can be referenced ──
 
-		schedule(500, () => {
-			startVideoA('intro', SWEEP_MS);
-		});
+	const doVideoA = useCallback(() => {
+		schedule(300, () => startVideoA('intro', SWEEP_MS));
+	}, [schedule, startVideoA]);
 
-		return () => {
-			clearTimers();
-		};
-	}, [clearTimers, schedule, sceneA.videoUrl, startVideoA]);
+	const doSceneNarration = useCallback(() => {
+		const scene = story.scenes[sceneIndex];
+		const narrationUrl = scene?.narration_url;
+		if (narrationUrl) {
+			setSessionPhase('scene-narration');
+			setCaption('');
+			playSrc(narrationUrl);
+		} else {
+			doVideoA();
+		}
+	}, [story, sceneIndex, playSrc, doVideoA]);
 
+	// ── Mark onboarding complete and exit ──
+	const completeSession = useCallback(async () => {
+		try {
+			await supabase
+				.from('profiles')
+				.update({ onboarding_complete: true })
+				.eq('id', userId);
+		} catch (err) {
+			console.error('Could not mark onboarding complete:', err);
+		}
+		onNext();
+	}, [userId, onNext]);
+
+	// ── Advance to the next scene, or finish the session ──
+	const advanceScene = useCallback(() => {
+		const nextIndex = sceneIndex + 1;
+		if (nextIndex >= story.scenes.length) {
+			setSessionPhase('complete');
+			return;
+		}
+		setSceneIndex(nextIndex);
+	}, [sceneIndex, story.scenes.length]);
+
+	// ── Single handler for ALL media end events ──────────────────────────────
 	const handleVideoEnded = useCallback(() => {
+		// Story intro finished → play scene narration
+		if (sessionPhase === 'story-intro') {
+			doSceneNarration();
+			return;
+		}
+		// Scene narration finished → play video A
+		if (sessionPhase === 'scene-narration') {
+			doVideoA();
+			return;
+		}
+		// Filler finished → advance to next scene
+		if (sessionPhase === 'filler') {
+			advanceScene();
+			return;
+		}
+		// Video A finished
 		if (sessionPhase === 'videoA') {
 			if (sequenceMode === 'singleA') {
 				setIsVideoPlaying(false);
@@ -199,64 +268,135 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				beginWiggleWindow();
 				return;
 			}
-
 			startVideoB(sequenceMode === 'both' ? 'both' : 'intro', SWEEP_MS);
 			return;
 		}
-
+		// Video B finished → go to replay
 		if (sessionPhase === 'videoB') {
 			snapToInteractiveReplay();
-		}
-	}, [beginWiggleWindow, sequenceMode, sessionPhase, snapToInteractiveReplay, startVideoB]);
-
-	const startTutorial = () => {
-		if (!isInteractivePhase) {
 			return;
 		}
-		setIsTutorialActive(true);
-		setTutorialStep(1);
+	}, [
+		sessionPhase,
+		sequenceMode,
+		doSceneNarration,
+		doVideoA,
+		advanceScene,
+		startVideoB,
+		snapToInteractiveReplay,
+		beginWiggleWindow,
+	]);
+
+	const handleHoldChange = (elementId: string, isHeld: boolean) => {
+		setActiveElements((prev) => {
+			if (isHeld) {
+				return prev.includes(elementId) ? prev : [...prev, elementId];
+			}
+			return prev.filter((e) => e !== elementId);
+		});
 	};
 
-	const handleAdvanceTutorial = () => {
-		setTutorialStep((value) => value + 1);
-	};
+	// After exploration: play filler through VideoPlayer, then advance
+	const handleContinueFromExploration = useCallback(() => {
+		const fillerUrl = currentScene?.filler_url ?? null;
+		if (fillerUrl) {
+			setSessionPhase('filler');
+			setCaption('');
+			playSrc(fillerUrl);
+		} else {
+			advanceScene();
+		}
+	}, [currentScene?.filler_url, playSrc, advanceScene]);
 
-	const handleTutorialComplete = () => {
-		setIsTutorialActive(false);
-		setTutorialStep(0);
-	};
-
-	const handleContinueFlow = async () => {
+	const handleContinueFlow = useCallback(() => {
 		if (sessionPhase === 'replay') {
 			setSessionPhase('preference');
 			setCaption('Which version did you prefer?');
 			return;
 		}
-
 		if (sessionPhase === 'exploration') {
-			onNext();
+			handleContinueFromExploration();
 		}
-	};
+	}, [sessionPhase, handleContinueFromExploration]);
 
 	const handleSkipReplay = () => {
 		setSessionPhase('preference');
 		setCaption('Which version did you prefer?');
 	};
 
-	const handleBackFlow = () => {
-		if (sessionPhase === 'exploration') {
-			setSessionPhase('strength');
-			setCaption('How strong was that preference?');
-			setObjectsInteractive(false);
-			setWiggleObjects(false);
-			return;
+	// ── Scene init: runs on mount (sceneIndex=0) and each time sceneIndex advances ──
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => {
+		// Always reset intro flag at sceneIndex 0 so a fresh mount plays the intro.
+		if (sceneIndex === 0) {
+			hasPlayedIntro.current = false;
 		}
 
-		onBack();
+		clearTimers();
+		setIsVideoPlaying(false);
+		setActiveElements([]);
+		setDividerX(50);
+		setIsDividerAnimating(false);
+		setIsTutorialActive(false);
+		setPreferredVersion(null);
+		setStrengthRating(null);
+		setObjectsInteractive(false);
+		setWiggleObjects(false);
+
+		if (!hasPlayedIntro.current) {
+			hasPlayedIntro.current = true;
+			const introUrl = story.narration_url ?? null;
+			if (introUrl) {
+				setSessionPhase('story-intro');
+				setCaption('');
+				playSrc(introUrl);
+				// handleVideoEnded('story-intro') → doSceneNarration → doVideoA
+			} else {
+				doSceneNarration();
+			}
+		} else {
+			doSceneNarration();
+		}
+
+		return () => {
+			clearTimers();
+			setIsVideoPlaying(false);
+		};
+	}, [sceneIndex]); // re-run only when scene advances
+
+	// Fire completeSession when all scenes are done
+	useEffect(() => {
+		if (sessionPhase === 'complete') {
+			void completeSession();
+		}
+	}, [sessionPhase, completeSession]);
+
+	useEffect(() => {
+		if (!isTutorialActive || !isInteractivePhase) return;
+		setActiveElements([]);
+	}, [isInteractivePhase, isTutorialActive]);
+
+	useEffect(() => {
+		if (sessionPhase !== 'videoB') return;
+		preloadInteractiveImage();
+	}, [preloadInteractiveImage, sessionPhase]);
+
+	const startTutorial = () => {
+		if (!isInteractivePhase) return;
+		setIsTutorialActive(true);
+		setTutorialStep(1);
+	};
+
+	const handleAdvanceTutorial = () => setTutorialStep((v) => v + 1);
+	const handleTutorialComplete = () => {
+		setIsTutorialActive(false);
+		setTutorialStep(0);
 	};
 
 	const versionLabel = sessionPhase === 'videoA' ? 'Version 1' : 'Version 2';
-	const versionLabelPosition = sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
+	const versionLabelPosition =
+		sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
+	const totalScenes = story.scenes.length;
 
 	return (
 		<Box
@@ -272,8 +412,33 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			display="flex"
 			flexDirection="column"
 		>
-			<Box position="relative" borderRadius="lg" overflow="hidden" bg="black" h="calc(100vh - 220px)" mb={6}>
-				{!isVideoPhase && (
+			{/* Scene progress indicator */}
+			<Flex justify="center" align="center" gap={3} mb={4}>
+				<HStack gap={2}>
+					{story.scenes.map((_, idx) => (
+						<Circle
+							key={idx}
+							size="10px"
+							bg={idx <= sceneIndex ? 'purple.500' : 'gray.300'}
+							_dark={{ bg: idx <= sceneIndex ? 'purple.400' : 'gray.600' }}
+						/>
+					))}
+				</HStack>
+				<Text fontSize="sm" color="gray.500" _dark={{ color: 'gray.400' }}>
+					Scene {sceneIndex + 1} of {totalScenes}
+				</Text>
+			</Flex>
+
+			<Box
+				position="relative"
+				borderRadius="lg"
+				overflow="hidden"
+				bg="black"
+				h="calc(100vh - 280px)"
+				mb={6}
+			>
+				{/* Scene split view — interactive phases only */}
+				{!isPlayerActive && (
 					<>
 						<SceneA
 							scene={sceneA}
@@ -297,11 +462,45 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					</>
 				)}
 
-				{isVideoPhase && <VideoPlayer src={videoSrc} isPlaying={isVideoPlaying} onEnded={handleVideoEnded} showProgress />}
+				{/* Single VideoPlayer handles narration audio + scene videos + filler.
+				    Narration phases (story-intro, scene-narration, filler) show a text
+				    overlay on top of the player — the audio plays underneath. */}
+				{isPlayerActive && (
+					<VideoPlayer
+						src={videoSrc}
+						isPlaying={isVideoPlaying}
+						onEnded={handleVideoEnded}
+						showProgress={isVideoPhase}
+					/>
+				)}
+
+				{/* Text overlay for narration phases */}
+				{isNarrationPhase && (
+					<Flex
+						position="absolute"
+						inset={0}
+						align="center"
+						justify="center"
+						zIndex={5}
+					>
+						<Text
+							color="white"
+							fontSize={{ base: 'lg', md: '2xl' }}
+							fontWeight="500"
+							textAlign="center"
+							px={8}
+							textShadow="0 1px 3px rgba(0,0,0,0.8)"
+						>
+							{sessionPhase === 'story-intro'
+								? story.name
+								: currentScene?.name ?? ''}
+						</Text>
+					</Flex>
+				)}
 
 				<DividerControl
 					dividerX={dividerX}
-					isInteractive={!isVideoPhase && !isTutorialActive}
+					isInteractive={!isPlayerActive && !isTutorialActive && isInteractivePhase}
 					isAnimating={isDividerAnimating}
 					animationDurationMs={dividerAnimationMs}
 					onDividerChange={setDividerX}
@@ -335,32 +534,37 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					size="sm"
 					borderRadius="full"
 					colorScheme="blue"
-					disabled={isVideoPhase || sessionPhase === 'intro'}
+					disabled={!isInteractivePhase}
 					onClick={startTutorial}
 				>
 					<FiInfo />
 				</IconButton>
 
-				<Box
-					position="absolute"
-					left={0}
-					right={0}
-					bottom={0}
-					zIndex={15}
-					bg="blackAlpha.700"
-					color="white"
-					px={{ base: 3, md: 4 }}
-					py={{ base: 2.5, md: 3 }}
-				>
-					<Text fontSize={{ base: 'sm', md: 'md' }} mb={sessionPhase === 'replay' ? 3 : 0}>
-						{caption}
-					</Text>
-				</Box>
+				{caption && (
+					<Box
+						position="absolute"
+						left={0}
+						right={0}
+						bottom={0}
+						zIndex={15}
+						bg="blackAlpha.700"
+						color="white"
+						px={{ base: 3, md: 4 }}
+						py={{ base: 2.5, md: 3 }}
+					>
+						<Text
+							fontSize={{ base: 'sm', md: 'md' }}
+							mb={sessionPhase === 'replay' ? 3 : 0}
+						>
+							{caption}
+						</Text>
+					</Box>
+				)}
 			</Box>
 
 			<AudioEngine scenes={scenes} activeElements={activeElements} />
 
-			<NavigationControls onBack={handleBackFlow} onNext={() => void handleContinueFlow()} />
+			<NavigationControls onBack={onBack} onNext={handleContinueFlow} />
 
 			<TutorialOverlay
 				isActive={isTutorialActive}
@@ -388,16 +592,21 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				selectedStrength={strengthRating}
 				onSubmit={async (strength) => {
 					setStrengthRating(strength);
-					if (!preferredVersion) return;
-					const saved = await onSubmitPreference(preferredVersion, strength);
+					if (!preferredVersion || !currentVersion?.id) return;
+					const saved = await saveResult(
+						userId,
+						currentVersion.id,
+						preferredVersion,
+						strength,
+					);
 					if (!saved) return;
 					setSessionPhase('exploration');
 					setCaption('Explore the scene and interact with objects.');
 					setWiggleObjects(false);
-					setObjectsInteractive(true);
+					setObjectsInteractive(!!currentVersion.interactive_enabled);
 				}}
-				isSubmitting={isSubmittingPreference}
-				submitError={submitError}
+				isSubmitting={resultLoading}
+				submitError={resultError}
 			/>
 
 			<ReplayOptionsModal

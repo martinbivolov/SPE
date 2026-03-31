@@ -7,8 +7,67 @@ import {
   Flex,
   Text,
   NativeSelect,
-} from "@chakra-ui/react";
-import { useSaveBackgroundInfo } from '../../hooks/useSaveBackgroundInfo';
+} from '@chakra-ui/react';
+import { useSaveQuizAnswers, type QuizAnswerEntry } from '../../hooks/useSaveQuizAnswers';
+
+// ---------------------------------------------------------------------------
+// Schema question IDs (seeded with fixed UUIDs in the V3 migration)
+// ---------------------------------------------------------------------------
+
+const Q_FAMILY_HISTORY     = '00000000-0000-0000-0002-000000000203'; // single
+const Q_NOISE_EXPOSURE     = '00000000-0000-0000-0002-000000000204'; // single
+const Q_NOISE_WHERE        = '00000000-0000-0000-0002-000000000205'; // multi (single-select UI)
+const Q_MEDICATIONS        = '00000000-0000-0000-0002-000000000206'; // free_text
+const Q_WEARING_AIDS       = '00000000-0000-0000-0002-000000000207'; // single
+const Q_AIDS_DURATION      = '00000000-0000-0000-0002-000000000402'; // free_text
+const Q_AIDS_EXPERIENCE    = '00000000-0000-0000-0002-000000000403'; // single
+const Q_PHONE_TYPE         = '00000000-0000-0000-0002-000000000404'; // single
+const Q_READY_TO_MOVE      = '00000000-0000-0000-0002-000000000405'; // single
+
+// ---------------------------------------------------------------------------
+// Answer option IDs (seeded with fixed UUIDs in the V3 migration)
+// The select value for each field IS the answer_option_id UUID.
+// ---------------------------------------------------------------------------
+
+// Q203 — family history
+const OPT_FAMILY_YES       = '00000000-0000-0000-0003-020300000001';
+const OPT_FAMILY_NO        = '00000000-0000-0000-0003-020300000002';
+const OPT_FAMILY_NOT_SURE  = '00000000-0000-0000-0003-020300000003';
+
+// Q204 — noise exposure
+const OPT_NOISE_YES        = '00000000-0000-0000-0003-020400000001';
+const OPT_NOISE_NO         = '00000000-0000-0000-0003-020400000002';
+
+// Q205 — where exposed
+const OPT_NOISE_WORKPLACE  = '00000000-0000-0000-0003-020500000001';
+const OPT_NOISE_MILITARY   = '00000000-0000-0000-0003-020500000002';
+const OPT_NOISE_MUSIC      = '00000000-0000-0000-0003-020500000003';
+const OPT_NOISE_OTHER      = '00000000-0000-0000-0003-020500000004';
+
+// Q207 — currently wearing hearing aids
+const OPT_AIDS_CURRENTLY   = '00000000-0000-0000-0003-020700000001';
+const OPT_AIDS_NOT_WEARING = '00000000-0000-0000-0003-020700000002';
+const OPT_AIDS_PREV_WORE   = '00000000-0000-0000-0003-020700000003';
+
+// Q403 — experience with hearing aids
+const OPT_EXP_SATISFIED    = '00000000-0000-0000-0003-040300000001';
+const OPT_EXP_MEH          = '00000000-0000-0000-0003-040300000002';
+const OPT_EXP_HATE_IT      = '00000000-0000-0000-0003-040300000003';
+
+// Q404 — smartphone type
+const OPT_PHONE_APPLE      = '00000000-0000-0000-0003-040400000001';
+const OPT_PHONE_ANDROID    = '00000000-0000-0000-0003-040400000002';
+const OPT_PHONE_DONT_KNOW  = '00000000-0000-0000-0003-040400000003';
+const OPT_PHONE_NONE       = '00000000-0000-0000-0003-040400000004';
+
+// Q405 — ready to move forward
+const OPT_READY_YES        = '00000000-0000-0000-0003-040500000001';
+const OPT_READY_NO         = '00000000-0000-0000-0003-040500000002';
+const OPT_READY_MORE_INFO  = '00000000-0000-0000-0003-040500000003';
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface LifestyleQuestionsProps {
   onNext: () => void;
@@ -16,23 +75,81 @@ interface LifestyleQuestionsProps {
   userId: string;
 }
 
+interface FormState {
+  familyHistory: string;
+  noiseExposure: string;
+  noiseExposureWhere: string;
+  medicalConditions: string;
+  wearingHearingAids: string;
+  hearingAidsDuration: string;
+  hearingAidExperience: string;
+  phoneType: string;
+  readyToMoveForward: string;
+}
+
+const EMPTY_FORM: FormState = {
+  familyHistory: '',
+  noiseExposure: '',
+  noiseExposureWhere: '',
+  medicalConditions: '',
+  wearingHearingAids: '',
+  hearingAidsDuration: '',
+  hearingAidExperience: '',
+  phoneType: '',
+  readyToMoveForward: '',
+};
+
 const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
   onNext,
   onBack,
   userId,
 }) => {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const { loading, error, saveBackgroundInfo } = useSaveBackgroundInfo();
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const { loading, error, saveAnswers } = useSaveQuizAnswers();
 
-  const setAnswer = (key: string, value: string) => {
-    setAnswers((previous) => ({ ...previous, [key]: value }));
+  const set = (key: keyof FormState) => (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+
+  // Build the typed entry list from current form state.
+  // Fields left empty are omitted — no partial rows are inserted.
+  const buildEntries = (): QuizAnswerEntry[] => {
+    const entries: QuizAnswerEntry[] = [];
+
+    if (form.familyHistory) {
+      entries.push({ questionId: Q_FAMILY_HISTORY, questionType: 'single', answerOptionId: form.familyHistory });
+    }
+    if (form.noiseExposure) {
+      entries.push({ questionId: Q_NOISE_EXPOSURE, questionType: 'single', answerOptionId: form.noiseExposure });
+    }
+    // Q205 is type 'multi' in the schema; the UI allows one selection at a time.
+    if (form.noiseExposureWhere) {
+      entries.push({ questionId: Q_NOISE_WHERE, questionType: 'multi', answerOptionId: form.noiseExposureWhere });
+    }
+    if (form.medicalConditions.trim()) {
+      entries.push({ questionId: Q_MEDICATIONS, questionType: 'free_text', textValue: form.medicalConditions.trim() });
+    }
+    if (form.wearingHearingAids) {
+      entries.push({ questionId: Q_WEARING_AIDS, questionType: 'single', answerOptionId: form.wearingHearingAids });
+    }
+    if (form.hearingAidsDuration.trim()) {
+      entries.push({ questionId: Q_AIDS_DURATION, questionType: 'free_text', textValue: form.hearingAidsDuration.trim() });
+    }
+    if (form.hearingAidExperience) {
+      entries.push({ questionId: Q_AIDS_EXPERIENCE, questionType: 'single', answerOptionId: form.hearingAidExperience });
+    }
+    if (form.phoneType) {
+      entries.push({ questionId: Q_PHONE_TYPE, questionType: 'single', answerOptionId: form.phoneType });
+    }
+    if (form.readyToMoveForward) {
+      entries.push({ questionId: Q_READY_TO_MOVE, questionType: 'single', answerOptionId: form.readyToMoveForward });
+    }
+
+    return entries;
   };
 
   const handleNext = async () => {
-    const ok = await saveBackgroundInfo(userId, answers);
-    if (ok) {
-      onNext();
-    }
+    const ok = await saveAnswers(userId, buildEntries());
+    if (ok) onNext();
   };
 
   return (
@@ -56,7 +173,7 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
 
       {error && (
         <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
-          Could not save background information: {error}
+          {error}
         </Text>
       )}
 
@@ -69,74 +186,66 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
         bgGradient="linear(to-r, white 0%, white 98%, rgb(168, 85, 247) 100%)"
         _dark={{ bg: 'gray.700' }}
         css={{
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "transparent",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgb(168, 85, 247)",
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            background: "rgb(147, 51, 234)",
-          },
+          '&::-webkit-scrollbar': { width: '8px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '4px' },
+          '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
         }}
       >
         <Stack gap={4}>
+
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
               Is there a history of hearing loss in your family?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field value={answers.family_history ?? ''} onChange={(event) => setAnswer('family_history', event.target.value)}>
+              <NativeSelect.Field value={form.familyHistory} onChange={set('familyHistory')}>
                 <option value="" disabled></option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+                <option value={OPT_FAMILY_YES}>Yes</option>
+                <option value={OPT_FAMILY_NO}>No</option>
+                <option value={OPT_FAMILY_NOT_SURE}>Not sure</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-             Have you ever experienced loud noise for an extended period of time?
+              Have you ever experienced loud noise for an extended period of time?
             </Text>
-           <NativeSelect.Root>
-              <NativeSelect.Field value={answers.extended_noise_exposure ?? ''} onChange={(event) => setAnswer('extended_noise_exposure', event.target.value)}>
+            <NativeSelect.Root>
+              <NativeSelect.Field value={form.noiseExposure} onChange={set('noiseExposure')}>
                 <option value="" disabled></option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+                <option value={OPT_NOISE_YES}>Yes</option>
+                <option value={OPT_NOISE_NO}>No</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-             If yes where:
+              If yes, where were you exposed to loud noise?
             </Text>
-           <NativeSelect.Root>
-              <NativeSelect.Field value={answers.noise_exposure_where ?? ''} onChange={(event) => setAnswer('noise_exposure_where', event.target.value)}>
+            <NativeSelect.Root>
+              <NativeSelect.Field value={form.noiseExposureWhere} onChange={set('noiseExposureWhere')}>
                 <option value="" disabled></option>
-                <option value="workplace">Workplace</option>
-                <option value="military">Military service</option>
-                <option value="music">Music or concerts</option>
-                <option value="other">Other</option>
+                <option value={OPT_NOISE_WORKPLACE}>Workplace</option>
+                <option value={OPT_NOISE_MILITARY}>Military service</option>
+                <option value={OPT_NOISE_MUSIC}>Music or concerts</option>
+                <option value={OPT_NOISE_OTHER}>Other</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
-
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-              Please list any medications or current medical conditions for which you are currently being treated for:
+              Please list any medications or medical conditions you are currently being treated for:
             </Text>
             <Input
               w="100%"
               variant="outline"
               placeholder="e.g., Hypertension, Diabetes, etc."
-              value={answers.medical_conditions ?? ''}
-              onChange={(event) => setAnswer('medical_conditions', event.target.value)}
+              value={form.medicalConditions}
+              onChange={set('medicalConditions')}
             />
           </Box>
 
@@ -145,75 +254,74 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
               Do you currently wear hearing aids?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field value={answers.wearing_hearing_aids ?? ''} onChange={(event) => setAnswer('wearing_hearing_aids', event.target.value)}>
+              <NativeSelect.Field value={form.wearingHearingAids} onChange={set('wearingHearingAids')}>
                 <option value="" disabled></option>
-                <option value="currently">Currently Wearing</option>
-                <option value="notWearing">Not Wearing</option>
-                <option value="previouslyWore">Previously Wore</option>
+                <option value={OPT_AIDS_CURRENTLY}>Currently Wearing</option>
+                <option value={OPT_AIDS_NOT_WEARING}>Not Wearing</option>
+                <option value={OPT_AIDS_PREV_WORE}>Previously Wore</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-              If yes, how long have you had them?
+              If you wear or have worn hearing aids, how long have you had them?
             </Text>
             <Input
               w="100%"
               variant="outline"
               placeholder="e.g., 3 months, 1 year, etc."
-              value={answers.hearing_aids_duration ?? ''}
-              onChange={(event) => setAnswer('hearing_aids_duration', event.target.value)}
+              value={form.hearingAidsDuration}
+              onChange={set('hearingAidsDuration')}
             />
           </Box>
 
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-              If yes, describe your experience with current hearing aids 
+              How would you describe your experience with your current or previous hearing aids?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field value={answers.hearing_aid_experience ?? ''} onChange={(event) => setAnswer('hearing_aid_experience', event.target.value)}>
+              <NativeSelect.Field value={form.hearingAidExperience} onChange={set('hearingAidExperience')}>
                 <option value="" disabled></option>
-                        <option value="currently">Satfisfied</option>
-                        <option value="notWearing">Hate It</option>
-                        <option value="previouslyWore">Meh</option>
-                </NativeSelect.Field>
+                <option value={OPT_EXP_SATISFIED}>Satisfied</option>
+                <option value={OPT_EXP_MEH}>Meh</option>
+                <option value={OPT_EXP_HATE_IT}>Hate It</option>
+              </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
           <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-              If you use a SMART (cell) phone, what type of phone?
+              What type of smartphone do you use?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field value={answers.phone_type ?? ''} onChange={(event) => setAnswer('phone_type', event.target.value)}>
+              <NativeSelect.Field value={form.phoneType} onChange={set('phoneType')}>
                 <option value="" disabled></option>
-                <option value="currently">Android</option>
-                <option value="notWearing">Apple</option>
-                <option value="previouslyWore">Don't know </option>
+                <option value={OPT_PHONE_APPLE}>Apple</option>
+                <option value={OPT_PHONE_ANDROID}>Android</option>
+                <option value={OPT_PHONE_DONT_KNOW}>Don't know</option>
+                <option value={OPT_PHONE_NONE}>Don't use a smartphone</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
 
-              <Box>
+          <Box>
             <Text fontSize="sm" fontWeight="500" mb={2} color="gray.700" _dark={{ color: 'gray.200' }}>
-              If new hearing aids are recommended, are you ready to move forward today
+              If new hearing aids are recommended, are you ready to move forward today?
             </Text>
             <NativeSelect.Root>
-              <NativeSelect.Field value={answers.ready_to_move_forward ?? ''} onChange={(event) => setAnswer('ready_to_move_forward', event.target.value)}>
+              <NativeSelect.Field value={form.readyToMoveForward} onChange={set('readyToMoveForward')}>
                 <option value="" disabled></option>
-                <option value="currently">Yes</option>
-                <option value="notWearing">No</option>
-                <option value="previouslyWore">Not sure </option>
+                <option value={OPT_READY_YES}>Yes</option>
+                <option value={OPT_READY_NO}>No</option>
+                <option value={OPT_READY_MORE_INFO}>Need more information first</option>
               </NativeSelect.Field>
             </NativeSelect.Root>
           </Box>
-
 
         </Stack>
       </Box>
 
-      
       <Flex justify="flex-end" gap={3}>
         <Button variant="outline" colorPalette="purple" onClick={onBack}>
           Back

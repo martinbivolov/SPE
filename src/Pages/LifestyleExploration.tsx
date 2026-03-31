@@ -47,7 +47,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   const renderContent = () => {
     switch (currentStep) {
       case 0:
-        return <SoundPreferenceQuestions onNext={handleNext} onBack={handleBack} />;
+        return <SoundPreferenceQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
       case 1:
         return <LifestyleQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
       case 2:
