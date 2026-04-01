@@ -6,27 +6,31 @@ interface QuotesQuestionProps {
   question: LifestyleQuestion;
   selectedOptionIds: string[];
   onToggle: (optionId: string) => void;
+  hideQuestionTitle?: boolean;
 }
 
 const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
   question,
   selectedOptionIds,
   onToggle,
+  hideQuestionTitle = false,
 }) => {
   const options = question.answer_options ?? [];
 
   return (
     <Box w="100%">
-      <Text
-        fontSize={{ base: 'md', md: 'lg' }}
-        fontWeight="600"
-        color="gray.700"
-        _dark={{ color: 'gray.200' }}
-        mb={{ base: 4, md: 6 }}
-        textAlign="center"
-      >
-        {question.text}
-      </Text>
+      {!hideQuestionTitle && (
+        <Text
+          fontSize={{ base: 'md', md: 'lg' }}
+          fontWeight="600"
+          color="gray.700"
+          _dark={{ color: 'gray.200' }}
+          mb={{ base: 4, md: 6 }}
+          textAlign="center"
+        >
+          {question.text}
+        </Text>
+      )}
 
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={{ base: 3, md: 4 }}>
         {options.map((option) => {
@@ -41,17 +45,17 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
               p={{ base: 4, md: 5 }}
               borderRadius="xl"
               border="2px solid"
-              borderColor={selected ? 'green.400' : 'gray.200'}
-              bg={selected ? 'green.50' : 'white'}
+              borderColor={selected ? 'purple.400' : 'gray.200'}
+              bg={selected ? 'purple.50' : 'gray.50'}
               _dark={{
-                bg: selected ? 'green.900' : 'gray.800',
-                borderColor: selected ? 'green.400' : 'gray.600',
+                bg: selected ? 'purple.900' : 'gray.800',
+                borderColor: selected ? 'purple.300' : 'gray.600',
               }}
               cursor="pointer"
               transition="border-color 0.15s, background 0.15s, box-shadow 0.15s"
               boxShadow={selected ? 'sm' : 'none'}
               _hover={{
-                borderColor: selected ? 'green.500' : 'purple.300',
+                borderColor: selected ? 'purple.500' : 'purple.300',
                 boxShadow: 'sm',
               }}
               _focus={{ outline: 'none', boxShadow: 'outline' }}

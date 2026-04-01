@@ -102,12 +102,12 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
       maxW="1280px"
       w="100%"
       mx="auto"
-      bg="gray.100"
+      bg="white"
       _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
       p={{ base: 4, md: 10 }}
       border="1px solid"
       borderColor="gray.300"
-      boxShadow="sm"
+      boxShadow="lg"
       display="flex"
       flexDirection="column"
       minH={{ base: "auto", md: "calc(100vh - 220px)" }}
@@ -141,10 +141,6 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
       {quotesQuestions.length > 0 && (
         <Box
           mb={8}
-          borderRadius="md"
-          p={{ base: 4, md: 7 }}
-          bg="gray.100"
-          _dark={{ bg: 'gray.700' }}
           overflowY="auto"
           maxH={{ base: 'auto', md: 'calc(100vh - 400px)' }}
         >
@@ -155,6 +151,7 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
                 question={question}
                 selectedOptionIds={selectedOptionIds}
                 onToggle={handleOptionToggle}
+                hideQuestionTitle
               />
             ))}
           </Stack>
