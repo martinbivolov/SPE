@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Flex, Button, Spinner, Text } from '@chakra-ui/react';
 import SoundPreference from './Pages/SoundPreference';
@@ -11,13 +10,6 @@ import StoryIntro from './components/StoryIntro';
 function App() {
   const navigate = useNavigate();
   const { data: user, loading, signOut } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      // After sign-in, navigate to lifestyle as per original logic
-      navigate('/lifestyle');
-    }
-  }, [user, navigate]);
 
   if (loading) {
     return (
