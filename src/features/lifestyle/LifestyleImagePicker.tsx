@@ -124,12 +124,13 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
               onClick={() => void handleToggle(option.id)}
               position="relative"
               overflow="hidden"
-              borderRadius="md"
-              border="3px solid"
-              borderColor={selected ? "purple.500" : "transparent"}
+              borderRadius="xl"
+              border="2px solid"
+              borderColor={selected ? "purple.400" : "gray.200"}
               _dark={{ borderColor: selected ? 'purple.300' : 'gray.600' }}
+              bg={selected ? 'purple.50' : 'gray.50'}
               boxShadow={selected ? "md" : "sm"}
-              _hover={{ boxShadow: "md" }}
+              _hover={{ boxShadow: "lg", borderColor: "purple.300" }}
               _focusVisible={{ outline: "2px solid", outlineColor: "purple.400" }}
             >
               <Image src={option.image_url} alt={option.label} w="100%" h={{ base: "170px", md: "200px" }} objectFit="cover" />
