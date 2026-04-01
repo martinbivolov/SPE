@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Button, Flex, Spinner, Stack, Text } from '@chakra-ui/react';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
@@ -22,6 +22,8 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
 }) => {
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveLifestyleAnswers();
+
+  const [visibleQuestionCount, setVisibleQuestionCount] = useState(9);
 
   const questionByOption = useMemo(() => {
     const map = new Map<string, string>();
@@ -106,9 +108,11 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
       border="1px solid"
       borderColor="gray.300"
       boxShadow="sm"
-      display={{ base: "block", md: "flex" }}
-      flexDirection={{ base: "unset", md: "column" }}
+      display="flex"
+      flexDirection="column"
       minH={{ base: "auto", md: "calc(100vh - 220px)" }}
+      maxH="calc(100vh - 220px)"
+      overflow="hidden"
     >
       <Text
         fontSize={{ base: "xl", md: "4xl" }}
@@ -141,9 +145,11 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
           p={{ base: 4, md: 7 }}
           bg="gray.100"
           _dark={{ bg: 'gray.700' }}
+          overflowY="auto"
+          maxH={{ base: 'auto', md: 'calc(100vh - 400px)' }}
         >
           <Stack gap={{ base: 10, md: 12 }}>
-            {quotesQuestions.map((question) => (
+            {quotesQuestions.slice(0, visibleQuestionCount).map((question) => (
               <QuotesQuestion
                 key={question.id}
                 question={question}
@@ -152,6 +158,30 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
               />
             ))}
           </Stack>
+
+          {visibleQuestionCount < quotesQuestions.length && (
+            <Flex justifyContent="center" mt={6}>
+              <Button
+                colorPalette="purple"
+                variant="outline"
+                onClick={() => setVisibleQuestionCount((prev) => Math.min(prev + 9, quotesQuestions.length))}
+              >
+                Show more quotes ({Math.min(quotesQuestions.length - visibleQuestionCount, 9)} remaining)
+              </Button>
+            </Flex>
+          )}
+
+          {visibleQuestionCount >= quotesQuestions.length && quotesQuestions.length > 9 && (
+            <Flex justifyContent="center" mt={6}>
+              <Button
+                colorPalette="purple"
+                variant="ghost"
+                onClick={() => setVisibleQuestionCount(9)}
+              >
+                Collapse back to first 9
+              </Button>
+            </Flex>
+          )}
         </Box>
       )}
 

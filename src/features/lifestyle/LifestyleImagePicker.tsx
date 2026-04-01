@@ -93,6 +93,8 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
       display="flex"
       flexDirection="column"
       minH="calc(100vh - 220px)"
+      maxH="calc(100vh - 220px)"
+      overflow="hidden"
     >
       <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="700" textAlign="center" color="gray.800" _dark={{ color: 'gray.100' }} mb={{ base: 5, md: 8 }}>
         What about your daily life?
@@ -110,8 +112,9 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
         </Text>
       )}
 
-      <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4} mb={8}>
-        {options.map((option) => {
+      <Box overflowY="auto" flex="1" mb={8}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4}>
+          {options.map((option) => {
           const selected = selectedImages.includes(option.id);
 
           return (
@@ -153,7 +156,8 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
             </Box>
           );
         })}
-      </SimpleGrid>
+        </SimpleGrid>
+      </Box>
 
       <Flex justify="flex-end" gap={3} mt="auto">
         <Button variant="outline" colorPalette="purple" onClick={onBack}>
