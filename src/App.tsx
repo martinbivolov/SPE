@@ -1,13 +1,16 @@
-import { FormEvent, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { Box, Button, Flex, Input, Spinner, Text } from '@chakra-ui/react';
-import SoundPreference from './pages/SoundPreference.tsx';
-import LifestyleExploration from './pages/LifestyleExploration.tsx';
+import SoundPreference from './Pages/SoundPreference';
+import LifestyleExploration from './Pages/LifestyleExploration';
 import { useAuth } from './hooks/useAuth';
+import StoryIntro from './components/StoryIntro';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'sound' | 'lifestyle'>('lifestyle');
   const [email, setEmail] = useState('');
   const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [showStoryIntro, setShowStoryIntro] = useState(false);
 
   const { data: user, loading, error, signIn, signOut } = useAuth();
 
@@ -68,6 +71,17 @@ function App() {
     );
   }
 
+  if (showStoryIntro) {
+    return (
+      <StoryIntro
+        onComplete={() => {
+          setShowStoryIntro(false);
+          setCurrentPage('sound');
+        }}
+      />
+    );
+  }
+
   return currentPage === 'sound' ? (
     <SoundPreference userId={user.id} onCompleted={() => setCurrentPage('lifestyle')} />
   ) : (
@@ -77,7 +91,11 @@ function App() {
           Sign out
         </Button>
       </Flex>
-      <LifestyleExploration userId={user.id} onNext={() => setCurrentPage('sound')} onBack={() => setCurrentPage('sound')} />
+      <LifestyleExploration
+        userId={user.id}
+        onNext={() => setShowStoryIntro(true)}
+        onBack={() => setCurrentPage('sound')}
+      />
     </>
   );
 }
