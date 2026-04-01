@@ -1,107 +1,42 @@
-import {
-  Box,
-  Text,
-  Flex,
-  Collapsible,
-} from "@chakra-ui/react";
+import React, { useState } from 'react';
+import { Box, Flex } from '@chakra-ui/react';
+import Header from '../components/layout/Header';
+import Sidebar from '../components/layout/Sidebar';
+import Footer from '../components/layout/Footer';
+import Results from '../components/Results';
 
-const DigitalTwinSection = () => {
+const DigitalTwin: React.FC = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
-    <Box p={6}>
-
-      {/* -------- LIFESTYLE -------- */}
-      <Text fontSize="2xl" fontWeight="700" mb={4}>
-        Lifestyle Results
-      </Text>
-
-      <Collapsible.Root defaultOpen>
-        <Collapsible.Trigger
-          asChild
+    <>
+      <Sidebar
+        activeItem="DigitalTwin"
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)}
+      />
+      <Flex direction="column" flex="1" w="100%">
+        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} />
+        <Box
+          flex="1"
+          p={{ base: 3, md: 0 }}
+          overflowY="auto"
+          display="flex"
+          flexDirection="column"
+          alignItems={{ base: "stretch", md: "center" }}
+          justifyContent={{ base: "flex-start", md: "center" }}
         >
-          <Box
-            bg="gray.100"
-            px={4}
-            py={3}
-            borderRadius="md"
-            cursor="pointer"
-            _hover={{ bg: "gray.200" }}
-          >
-            <Flex justify="space-between">
-              <Text fontWeight="600">Profile</Text>
-              <Text color="gray.500">Expand</Text>
-            </Flex>
-          </Box>
-        </Collapsible.Trigger>
-
-        <Collapsible.Content>
-          <Box bg="white" p={4} mt={2} borderRadius="md">
-            <Flex justify="space-between" mb={2}>
-              <Text color="gray.500">Category</Text>
-              <Text color="gray.500">User Selection</Text>
-            </Flex>
-
-            <Flex justify="space-between">
-              <Text>Dona Jona</Text>
-              <Text>First time user</Text>
-            </Flex>
-          </Box>
-        </Collapsible.Content>
-      </Collapsible.Root>
-
-      {/* -------- SOUND PREF -------- */}
-      <Text fontSize="2xl" fontWeight="700" mt={8} mb={4}>
-        Sound Preference Results
-      </Text>
-
-      {[1, 2, 3].map((item) => (
-        <Collapsible.Root key={item}>
-          <Collapsible.Trigger asChild>
-            <Box
-              bg="gray.100"
-              px={4}
-              py={3}
-              borderRadius="md"
-              cursor="pointer"
-              mb={2}
-              _hover={{ bg: "gray.200" }}
-            >
-              <Flex justify="space-between">
-                <Text fontWeight="600">Scene #{item}</Text>
-                <Text color="gray.500">Expand</Text>
-              </Flex>
-            </Box>
-          </Collapsible.Trigger>
-
-          <Collapsible.Content>
-            <Box bg="white" p={4} mb={2} borderRadius="md">
-              <Flex justify="space-between" mb={2}>
-                <Text color="gray.500">Preference</Text>
-                <Text>Strong</Text>
-              </Flex>
-
-              <Flex justify="space-between" mb={2}>
-                <Text color="gray.500">Variant</Text>
-                <Text>Prefer first variant</Text>
-              </Flex>
-
-              <Flex justify="space-between">
-                <Text color="gray.500">Scene</Text>
-                <Text>Walk in the Park</Text>
-              </Flex>
-            </Box>
-          </Collapsible.Content>
-        </Collapsible.Root>
-      ))}
-
-      {/* -------- AUDIO -------- */}
-      <Box mt={8} bg="gray.200" p={10} borderRadius="md" textAlign="center">
-        <Text color="gray.600">
-          Audio will be placed here
-        </Text>
-      </Box>
-
-    </Box>
+          <Results />
+        </Box>
+        <Footer />
+      </Flex>
+    </>
   );
 };
 
-export default DigitalTwinSection;
+export default DigitalTwin;

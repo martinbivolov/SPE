@@ -1,0 +1,63 @@
+.dt-container {
+  padding: 40px 60px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.dt-section {
+  margin-top: 40px;
+}
+
+/* HEADER */
+.dt-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 2fr 1fr;
+  padding: 10px 16px;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+/* ROWS */
+.dt-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 2fr 1fr;
+  padding: 14px 16px;
+  margin-bottom: 2px;
+  background: #ffffff;
+  border-bottom: 1px solid #eee;
+}
+
+.dt-main {
+  background: #f3f3f3;
+  cursor: pointer;
+}
+
+.dt-main:hover {
+  background: #eaeaea;
+}
+
+.dt-alt {
+  background: #ffffff;
+  padding-left: 56px;
+}
+
+/* AUDIO */
+.dt-audio {
+  background: #f3f3f3;
+  padding: 20px;
+  border-left: 3px solid #7c3aed;
+}
+
+.dt-audio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+audio {
+  width: 100%;
+}
