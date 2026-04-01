@@ -95,12 +95,12 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       maxW="1280px"
       w="100%"
       mx="auto"
-      bg="gray.100"
+      bg="white"
       _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
       p={{ base: 4, md: 10 }}
       border="1px solid"
       borderColor="gray.300"
-      boxShadow="sm"
+      boxShadow="lg"
       display={{ base: 'block', md: 'flex' }}
       flexDirection={{ base: 'unset', md: 'column' }}
       minH={{ base: 'auto', md: 'calc(100vh - 220px)' }}
@@ -124,7 +124,18 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         </Text>
       )}
 
-      <Box flex="1" overflowY="auto" mb={8}>
+      <Box
+        flex="1"
+        overflowY="auto"
+        mb={8}
+        p={{ base: 4, md: 6 }}
+        css={{
+          '&::-webkit-scrollbar': { width: '10px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '999px' },
+          '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
+        }}
+      >
         <SimpleGrid
           columns={{ base: 1, md: 3 }}
           gap={{ base: 6, md: 6 }}
@@ -136,9 +147,10 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
               border="1px solid"
               borderColor="gray.200"
               _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
-              borderRadius="md"
-              p={{ base: 4, md: 5 }}
               bg="gray.50"
+              boxShadow="sm"
+              borderRadius="xl"
+              p={{ base: 4, md: 5 }}
               overflow="hidden"
             >
               <Text

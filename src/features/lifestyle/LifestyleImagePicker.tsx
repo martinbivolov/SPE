@@ -112,7 +112,18 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
         </Text>
       )}
 
-      <Box overflowY="auto" flex="1" mb={8}>
+      <Box
+        overflowY="auto"
+        flex="1"
+        mb={8}
+        p={{ base: 4, md: 6 }}
+        css={{
+          '&::-webkit-scrollbar': { width: '10px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '999px' },
+          '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
+        }}
+      >
         <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={4}>
           {options.map((option) => {
           const selected = selectedImages.includes(option.id);

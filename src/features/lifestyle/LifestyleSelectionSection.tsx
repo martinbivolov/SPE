@@ -143,6 +143,13 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
           mb={8}
           overflowY="auto"
           maxH={{ base: 'auto', md: 'calc(100vh - 400px)' }}
+          p={{ base: 4, md: 6 }}
+          css={{
+            '&::-webkit-scrollbar': { width: '10px' },
+            '&::-webkit-scrollbar-track': { background: 'transparent' },
+            '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '999px' },
+            '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
+          }}
         >
           <Stack gap={{ base: 10, md: 12 }}>
             {quotesQuestions.slice(0, visibleQuestionCount).map((question) => (
