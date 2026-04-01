@@ -1,0 +1,233 @@
+/* ---------------- ROOT CONTAINER ---------------- */
+
+.story-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: radial-gradient(circle at 50% 50%, #0a0015 0%, #000000 70%);
+  color: white;
+}
+
+/* animated glow */
+.story-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 40% 40%, rgba(112, 0, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 60% 60%, rgba(112, 0, 255, 0.1), transparent 50%);
+  animation: bgMove 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* subtle grain */
+.story-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+@keyframes bgMove {
+  0% {
+    transform: scale(1) translate(0px, 0px);
+  }
+  100% {
+    transform: scale(1.2) translate(-20px, 20px);
+  }
+}
+
+/* ---------------- LAYOUT ---------------- */
+
+.animation-area {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+/* ---------------- DOTS ---------------- */
+
+.dots-wrapper {
+  position: relative;
+  width: 120px;
+  height: 24px;
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  background: #a855f7;
+  border-radius: 50%;
+  transform: translateY(-50%) scale(1);
+  opacity: 0.85;
+}
+
+.dot-left { left: 0; }
+.dot-center { left: 51px; }
+.dot-right { left: 102px; }
+
+/* pulsing */
+.pulse .dot-left {
+  animation: dotPulse 1.2s infinite ease-in-out;
+}
+.pulse .dot-center {
+  animation: dotPulse 1.2s infinite ease-in-out 0.18s;
+}
+.pulse .dot-right {
+  animation: dotPulse 1.2s infinite ease-in-out 0.36s;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    transform: translateY(-50%) scale(0.82);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* merge */
+.merge .dot {
+  animation: none;
+  transition:
+    left 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.9s ease;
+}
+
+.merge .dot-left,
+.merge .dot-center,
+.merge .dot-right {
+  left: 51px;
+  transform: translateY(-50%) scale(0.9);
+  opacity: 1;
+}
+
+/* ---------------- WAVES ---------------- */
+
+.circle-wrapper {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: waveIntro 0.5s ease-out forwards;
+}
+
+@keyframes waveIntro {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  background: #7000ff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 20px rgba(112, 0, 255, 0.7);
+}
+
+.ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+}
+
+.ring-1 {
+  width: 120px;
+  height: 120px;
+  border: 3px solid rgba(112, 0, 255, 0.85);
+  box-shadow: 0 0 30px rgba(112, 0, 255, 0.6);
+  animation:
+    burst 0.6s ease-out forwards,
+    pulseRing 2.8s infinite ease-out 0.6s;
+}
+
+.ring-2 {
+  width: 120px;
+  height: 120px;
+  border: 2px solid rgba(112, 0, 255, 0.4);
+  animation: pulseRing 2.8s infinite ease-out 1.4s;
+}
+
+@keyframes burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ---------------- TEXT ---------------- */
+
+.text {
+  text-align: center;
+}
+
+.fade {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+.fade.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.text h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.text h2 {
+  margin-top: 14px;
+  font-size: 21px;
+  color: #c9c9c9;
+}
