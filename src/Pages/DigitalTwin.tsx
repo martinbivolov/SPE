@@ -13,7 +13,7 @@ const DigitalTwin: React.FC = () => {
   };
 
   return (
-    <>
+    <Flex h="100vh" bg="gray.50" _dark={{ bg: 'gray.800' }} position="relative">
       <Sidebar
         activeItem="DigitalTwin"
         isOpen={sidebarOpen}
@@ -35,7 +35,7 @@ const DigitalTwin: React.FC = () => {
         </Box>
         <Footer />
       </Flex>
-    </>
+    </Flex>
   );
 };
 
