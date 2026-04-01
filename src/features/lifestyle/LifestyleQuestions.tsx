@@ -165,7 +165,9 @@ const LifestyleQuestions: React.FC<LifestyleQuestionsProps> = ({
       boxShadow="md"
       display="flex"
       flexDirection="column"
-      maxH="calc(100vh - 200px)"
+      minH="calc(100vh - 220px)"
+      maxH="calc(100vh - 220px)"
+      overflow="hidden"
     >
       <Text fontSize="lg" fontWeight="bold" textAlign="center" mb={6} color="gray.800" _dark={{ color: 'gray.100' }}>
         Lifestyle Exploration

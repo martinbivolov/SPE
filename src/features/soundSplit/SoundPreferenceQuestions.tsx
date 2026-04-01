@@ -104,6 +104,8 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       display={{ base: 'block', md: 'flex' }}
       flexDirection={{ base: 'unset', md: 'column' }}
       minH={{ base: 'auto', md: 'calc(100vh - 220px)' }}
+      maxH="calc(100vh - 220px)"
+      overflow="hidden"
     >
       <Text
         fontSize={{ base: 'xl', md: '4xl' }}
@@ -122,7 +124,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         </Text>
       )}
 
-      <Box mb={8}>
+      <Box flex="1" overflowY="auto" mb={8}>
         <SimpleGrid
           columns={{ base: 1, md: 3 }}
           gap={{ base: 6, md: 6 }}
