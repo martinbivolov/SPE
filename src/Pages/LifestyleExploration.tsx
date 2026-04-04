@@ -71,7 +71,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
           />
         );
       default:
-        return <SoundPreferenceQuestions onNext={handleNext} onBack={handleBack} />;
+        return <SoundPreferenceQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
     }
   };
 

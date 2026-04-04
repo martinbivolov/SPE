@@ -6,6 +6,7 @@ import DigitalTwin from './Pages/DigitalTwin';
 import SignIn from './Pages/SignIn';
 import { useAuth } from './hooks/useAuth';
 import StoryIntro from './components/StoryIntro';
+import ProfileForm from './features/profile/ProfileForm';
 
 function App() {
   const navigate = useNavigate();
@@ -32,7 +33,8 @@ function App() {
         </Button>
       </Flex>
       <Routes>
-        <Route path="/" element={<Navigate to="/lifestyle" />} />
+        <Route path="/" element={<Navigate to="/profile" />} />
+        <Route path="/profile" element={<ProfileForm onNext={() => navigate('/lifestyle')} />} />
         <Route path="/sound" element={<SoundPreference userId={user.id} onCompleted={() => navigate('/digital-twin')} />} />
         <Route path="/lifestyle" element={<LifestyleExploration userId={user.id} onNext={() => navigate('/story-intro')} onBack={() => navigate('/sound')} />} />
         <Route path="/story-intro" element={<StoryIntro onComplete={() => navigate('/sound')} />} />
