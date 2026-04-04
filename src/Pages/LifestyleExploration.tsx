@@ -3,7 +3,6 @@ import { Flex, Box } from '@chakra-ui/react';
 import Sidebar from '../components/layout/Sidebar';
 import Header from '../components/layout/Header';
 import SoundPreferenceQuestions from '../features/soundSplit/SoundPreferenceQuestions';
-import LifestyleQuestions from '../features/lifestyle/LifestyleQuestions';
 import LifestyleSelectionSection from '../features/lifestyle/LifestyleSelectionSection';
 import LifestyleImagePicker from '../features/lifestyle/LifestyleImagePicker';
 import Footer from '../components/layout/Footer';
@@ -25,7 +24,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   };
 
   const handleNext = () => {
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       onNext?.();
     } else {
       setCurrentStep(currentStep + 1);
@@ -49,8 +48,6 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
       case 0:
         return <SoundPreferenceQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
       case 1:
-        return <LifestyleQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
-      case 2:
         return (
           <LifestyleSelectionSection
             userId={userId}
@@ -60,7 +57,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
             onSelectionChange={setSelectedOptionIds}
           />
         );
-      case 3:
+      case 2:
         return (
           <LifestyleImagePicker
             userId={userId}

@@ -19,43 +19,27 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
   onSelectionChange,
 }) => {
   const { data: options, loading, error } = useImagePickerOptions();
-  const {
-    loading: saveLoading,
-    error: saveError,
-    initializeUserTagWeights,
-    savePick,
-  } = useSaveImagePick();
+  const { loading: saveLoading, error: saveError, initializeUserTagWeights, saveSelections } = useSaveImagePick();
 
   useEffect(() => {
     void initializeUserTagWeights(userId);
   }, [initializeUserTagWeights, userId]);
 
-  const handleToggle = async (id: string) => {
-    const pickedOption = options.find((option) => option.id === id);
-    if (!pickedOption) {
-      return;
-    }
-
-    const priorSelectedId = selectedImages[selectedImages.length - 1];
-    const rejectedOption = options.find((option) => option.id === priorSelectedId);
-
+  const handleToggle = (id: string) => {
     const isSelected = selectedImages.includes(id);
     const updated = isSelected
       ? selectedImages.filter((item) => item !== id)
       : [...selectedImages, id];
-
     onSelectionChange(updated);
+  };
 
-    if (!isSelected && rejectedOption && rejectedOption.id !== pickedOption.id) {
-      await savePick(
-        userId,
-        pickedOption.id,
-        rejectedOption.id,
-        pickedOption.tag_id,
-        rejectedOption.tag_id,
-        pickedOption.weight
-      );
-    }
+  const handleNext = async () => {
+    const selectedOptions = selectedImages
+      .map((id) => options.find((o) => o.id === id))
+      .filter((o): o is NonNullable<typeof o> => o != null);
+
+    const ok = await saveSelections(userId, selectedOptions);
+    if (ok) onNext();
   };
 
   if (loading) {
@@ -102,13 +86,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
 
       {saveError && (
         <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
-          Could not save your last pick: {saveError}
-        </Text>
-      )}
-
-      {saveLoading && (
-        <Text mb={4} color="gray.600" _dark={{ color: 'gray.300' }} fontSize="sm">
-          Saving your pick...
+          Could not save your picks: {saveError}
         </Text>
       )}
 
@@ -132,7 +110,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
             <Box
               key={option.id}
               as="button"
-              onClick={() => void handleToggle(option.id)}
+              onClick={() => handleToggle(option.id)}
               position="relative"
               overflow="hidden"
               borderRadius="xl"
@@ -144,7 +122,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
               _hover={{ boxShadow: "lg", borderColor: "purple.300" }}
               _focusVisible={{ outline: "2px solid", outlineColor: "purple.400" }}
             >
-              <Image src={option.image_url} alt={option.label} w="100%" h={{ base: "170px", md: "200px" }} objectFit="cover" />
+              <Image src={option.image_url} alt={option.label ?? ''} w="100%" h={{ base: "170px", md: "200px" }} objectFit="cover" />
               <Box
                 position="absolute"
                 inset={0}
@@ -175,7 +153,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
         <Button variant="outline" colorPalette="purple" onClick={onBack}>
           Back
         </Button>
-        <Button colorPalette="purple" onClick={onNext}>
+        <Button colorPalette="purple" loading={saveLoading} onClick={() => void handleNext()}>
           Next
         </Button>
       </Flex>

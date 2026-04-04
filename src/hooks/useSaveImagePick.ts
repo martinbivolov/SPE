@@ -1,23 +1,15 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import type { ImagePickerOption } from '../types/supabase.types';
 
 interface SaveImagePickResult {
-	data: boolean;
 	loading: boolean;
 	error: string | null;
 	initializeUserTagWeights: (userId: string) => Promise<boolean>;
-	savePick: (
-		userId: string,
-		chosenId: string,
-		rejectedId: string,
-		chosenTagId: string,
-		rejectedTagId: string,
-		weight?: number
-	) => Promise<boolean>;
+	saveSelections: (userId: string, selectedOptions: ImagePickerOption[]) => Promise<boolean>;
 }
 
 export const useSaveImagePick = (): SaveImagePickResult => {
-	const [data, setData] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -29,69 +21,59 @@ export const useSaveImagePick = (): SaveImagePickResult => {
 		setLoading(false);
 
 		if (initError) {
-			setData(false);
 			setError(initError.message);
 			return false;
 		}
 
-		setData(true);
 		return true;
 	}, []);
 
-	const savePick = useCallback(async (
+	const saveSelections = useCallback(async (
 		userId: string,
-		chosenId: string,
-		rejectedId: string,
-		chosenTagId: string,
-		rejectedTagId: string,
-		weight: number = 2
-	) => {
+		selectedOptions: ImagePickerOption[],
+	): Promise<boolean> => {
+		if (selectedOptions.length === 0) return true;
+
 		setLoading(true);
 		setError(null);
 
-		const { error: insertError } = await supabase.from('image_picker_responses').insert({
-			user_id: userId,
-			chosen_id: chosenId,
-			rejected_id: rejectedId,
-		});
+		try {
+			// Insert one image_picker_responses row per selected image.
+			const { error: insertError } = await supabase
+				.from('image_picker_responses')
+				.insert(
+					selectedOptions.map((opt) => ({
+						user_id: userId,
+						chosen_id: opt.id,
+					})),
+				);
 
-		if (insertError) {
+			if (insertError) throw new Error(insertError.message);
+
+			// Increment the tag weight for each selected option.
+			const rpcResults = await Promise.all(
+				selectedOptions
+					.filter((opt) => opt.tag_id != null)
+					.map((opt) =>
+						supabase.rpc('increment_user_tag', {
+							p_user_id: userId,
+							p_tag_id: opt.tag_id,
+							p_amount: opt.weight,
+						}),
+					),
+			);
+
+			const rpcFailure = rpcResults.find((r) => r.error);
+			if (rpcFailure?.error) throw new Error(rpcFailure.error.message);
+
 			setLoading(false);
-			setData(false);
-			setError(insertError.message);
-			return false;
-		}
-
-		const { error: chosenError } = await supabase.rpc('increment_user_tag', {
-			p_user_id: userId,
-			p_tag_id: chosenTagId,
-			p_amount: weight,
-		});
-
-		if (chosenError) {
+			return true;
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
 			setLoading(false);
-			setData(false);
-			setError(chosenError.message);
 			return false;
 		}
-
-		const { error: rejectedError } = await supabase.rpc('increment_user_tag', {
-			p_user_id: userId,
-			p_tag_id: rejectedTagId,
-			p_amount: -1,
-		});
-
-		setLoading(false);
-
-		if (rejectedError) {
-			setData(false);
-			setError(rejectedError.message);
-			return false;
-		}
-
-		setData(true);
-		return true;
 	}, []);
 
-	return { data, loading, error, initializeUserTagWeights, savePick };
+	return { loading, error, initializeUserTagWeights, saveSelections };
 };

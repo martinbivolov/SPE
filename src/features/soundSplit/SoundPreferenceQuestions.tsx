@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Flex,
+  Input,
   NativeSelect,
   SimpleGrid,
   Spinner,
@@ -27,10 +28,12 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveQuizAnswers();
 
-  // Map from question_id → selected answer_option_id
+  // Map from question_id → selected answer_option_id (single/multi questions)
   const [selections, setSelections] = useState<Record<string, string>>({});
+  // Map from question_id → typed text (free_text questions)
+  const [freeTexts, setFreeTexts] = useState<Record<string, string>>({});
 
-  // Only show groups whose questions are single or multi type (not quotes).
+  // Show single, multi, and free_text questions.
   // Quotes questions have their own speech-bubble UI in the next step.
   const visibleGroups = useMemo(
     () =>
@@ -38,7 +41,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         .map((group) => ({
           ...group,
           lifestyle_questions: (group.lifestyle_questions ?? []).filter(
-            (q) => q.type === 'single' || q.type === 'multi',
+            (q) => q.type === 'single' || q.type === 'multi' || q.type === 'free_text',
           ),
         }))
         .filter((g) => g.lifestyle_questions.length > 0),
@@ -54,13 +57,21 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
 
     for (const group of visibleGroups) {
       for (const question of group.lifestyle_questions) {
-        const selected = selections[question.id];
-        if (selected) {
-          entries.push({
-            questionId: question.id,
-            questionType: question.type as 'single' | 'multi',
-            answerOptionId: selected,
-          });
+        if (question.type === 'free_text') {
+          const text = freeTexts[question.id]?.trim();
+          const answerOptionId = question.answer_options?.[0]?.id;
+          if (text && answerOptionId) {
+            entries.push({ questionId: question.id, questionType: 'free_text', answerOptionId, textValue: text });
+          }
+        } else {
+          const selected = selections[question.id];
+          if (selected) {
+            entries.push({
+              questionId: question.id,
+              questionType: question.type as 'single' | 'multi',
+              answerOptionId: selected,
+            });
+          }
         }
       }
     }
@@ -178,23 +189,35 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                     >
                       {question.text}
                     </Text>
-                    <NativeSelect.Root>
-                      <NativeSelect.Field
-                        value={selections[question.id] ?? ''}
-                        onChange={(e) => handleSelect(question.id, e.target.value)}
+                    {question.type === 'free_text' ? (
+                      <Input
+                        placeholder="Type your answer..."
+                        value={freeTexts[question.id] ?? ''}
+                        onChange={(e) =>
+                          setFreeTexts((prev) => ({ ...prev, [question.id]: e.target.value }))
+                        }
                         bg="white"
                         _dark={{ bg: 'gray.700' }}
-                      >
-                        <option value="" disabled>
-                          Select an option
-                        </option>
-                        {(question.answer_options ?? []).map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.label}
+                      />
+                    ) : (
+                      <NativeSelect.Root>
+                        <NativeSelect.Field
+                          value={selections[question.id] ?? ''}
+                          onChange={(e) => handleSelect(question.id, e.target.value)}
+                          bg="white"
+                          _dark={{ bg: 'gray.700' }}
+                        >
+                          <option value="" disabled>
+                            Select an option
                           </option>
-                        ))}
-                      </NativeSelect.Field>
-                    </NativeSelect.Root>
+                          {(question.answer_options ?? []).map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                      </NativeSelect.Root>
+                    )}
                   </Box>
                 ))}
               </Stack>

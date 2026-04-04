@@ -116,13 +116,19 @@ export interface StoryRecommendation {
 
 export interface AnswerOption {
   id: string;
-  question_id: string;
   label: string;
   sort_order: number;
 }
 
 export type AnswerOptionInsert = Omit<AnswerOption, 'id'> & { id?: string };
 export type AnswerOptionUpdate = Partial<AnswerOptionInsert>;
+
+export interface QuestionOptionJoin {
+  question_id: string;
+  answer_option_id: string;
+  // Joined relation — only present when fetched with nested select
+  answer_options?: AnswerOption;
+}
 
 export type QuestionType = 'single' | 'multi' | 'quotes' | 'free_text' | 'info_only';
 
@@ -169,7 +175,8 @@ export interface LifestyleAnswer {
   id: string;
   user_id: string;
   question_id: string;
-  answer_option_id: string;
+  answer_option_id: string | null;
+  free_text_answer: string | null;
   created_at: string;
 }
 
@@ -198,7 +205,6 @@ export type ImagePickerOptionUpdate = Partial<ImagePickerOptionInsert>;
 export interface ImagePickerResponse {
   user_id: string;
   chosen_id: string;
-  rejected_id: string;
   created_at: string;
 }
 

@@ -15,6 +15,7 @@ export type QuizAnswerEntry =
   | {
       questionId: string;
       questionType: 'free_text';
+      answerOptionId: string;
       textValue: string;
     }
   | {
@@ -116,23 +117,37 @@ export const useSaveQuizAnswers = (): UseSaveQuizAnswersResult => {
         }
 
         // ── Free-text answers ───────────────────────────────────────────────
-        // Free-text answers are not inserted into lifestyle_answers (no
-        // answer_option_id to store). Instead the text values are written to
-        // profiles.background_info, keyed by question_id.
+        // Delete any existing free-text row for this user+question+option,
+        // then insert the new value with both answer_option_id and free_text_answer.
 
         if (freeTextAnswers.length > 0) {
-          const backgroundInfoPatch = Object.fromEntries(
-            freeTextAnswers.map((a) => [a.questionId, a.textValue]),
-          );
+          const { error: deleteError } = await supabase
+            .from('lifestyle_answers')
+            .delete()
+            .eq('user_id', user.id)
+            .in('question_id', freeTextAnswers.map((a) => a.questionId))
+            .in('answer_option_id', freeTextAnswers.map((a) => a.answerOptionId));
 
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ background_info: backgroundInfoPatch })
-            .eq('id', user.id);
-
-          if (profileError) {
+          if (deleteError) {
             throw new Error(
-              `Could not save your background information. Please try again. (${profileError.message})`,
+              `Could not update your answers. Please try again. (${deleteError.message})`,
+            );
+          }
+
+          const { error: insertError } = await supabase
+            .from('lifestyle_answers')
+            .insert(
+              freeTextAnswers.map((a) => ({
+                user_id: user.id,
+                question_id: a.questionId,
+                answer_option_id: a.answerOptionId,
+                free_text_answer: a.textValue,
+              })),
+            );
+
+          if (insertError) {
+            throw new Error(
+              `Could not save your answers. Please try again. (${insertError.message})`,
             );
           }
         }
