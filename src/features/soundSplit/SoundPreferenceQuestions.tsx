@@ -41,7 +41,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         .map((group) => ({
           ...group,
           lifestyle_questions: (group.lifestyle_questions ?? []).filter(
-            (q) => q.type === 'single' || q.type === 'multi' || q.type === 'free_text',
+            (q) => q.type === 'single' || q.type === 'free_text',
           ),
         }))
         .filter((g) => g.lifestyle_questions.length > 0),

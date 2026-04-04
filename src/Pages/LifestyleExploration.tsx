@@ -6,6 +6,7 @@ import SoundPreferenceQuestions from '../features/soundSplit/SoundPreferenceQues
 import LifestyleSelectionSection from '../features/lifestyle/LifestyleSelectionSection';
 import LifestyleImagePicker from '../features/lifestyle/LifestyleImagePicker';
 import Footer from '../components/layout/Footer';
+import LifestyleSelectionSectionMulti from '../features/lifestyle/LifestyleSelectionSectionMulti';
 
 interface LifestyleExplorationProps {
   userId: string;
@@ -47,7 +48,17 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
     switch (currentStep) {
       case 0:
         return <SoundPreferenceQuestions userId={userId} onNext={handleNext} onBack={handleBack} />;
-      case 1:
+        case 1:
+        return (
+          <LifestyleSelectionSectionMulti
+            userId={userId}
+            onNext={handleNext}
+            onBack={handleBack}
+            selectedOptionIds={selectedOptionIds}
+            onSelectionChange={setSelectedOptionIds}
+          />
+        );
+      case 2:
         return (
           <LifestyleSelectionSection
             userId={userId}
@@ -57,7 +68,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
             onSelectionChange={setSelectedOptionIds}
           />
         );
-      case 2:
+      case 3:
         return (
           <LifestyleImagePicker
             userId={userId}
