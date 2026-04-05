@@ -5,7 +5,6 @@ import {
   Flex,
   Input,
   NativeSelect,
-  SimpleGrid,
   Spinner,
   Stack,
   Text,
@@ -28,13 +27,10 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveQuizAnswers();
 
-  // Map from question_id → selected answer_option_id (single/multi questions)
   const [selections, setSelections] = useState<Record<string, string>>({});
-  // Map from question_id → typed text (free_text questions)
   const [freeTexts, setFreeTexts] = useState<Record<string, string>>({});
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
 
-  // Show single, multi, and free_text questions.
-  // Quotes questions have their own speech-bubble UI in the next step.
   const visibleGroups = useMemo(
     () =>
       groups
@@ -48,11 +44,19 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
     [groups],
   );
 
+  const currentGroup = visibleGroups[currentGroupIndex];
+  const isLastGroup = currentGroupIndex === visibleGroups.length - 1;
+
   const handleSelect = (questionId: string, value: string) => {
     setSelections((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const handleNext = async () => {
+  const handleNextGroup = async () => {
+    if (!isLastGroup) {
+      setCurrentGroupIndex((i) => i + 1);
+      return;
+    }
+
     const entries: QuizAnswerEntry[] = [];
 
     for (const group of visibleGroups) {
@@ -80,6 +84,14 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
     if (ok) onNext();
   };
 
+  const handleBackGroup = () => {
+    if (currentGroupIndex > 0) {
+      setCurrentGroupIndex((i) => i - 1);
+    } else {
+      onBack();
+    }
+  };
+
   if (loading) {
     return (
       <Flex direction="column" align="center" justify="center" minH="420px" gap={3}>
@@ -103,7 +115,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
 
   return (
     <Box
-      maxW="1280px"
+      maxW="1120px"
       w="100%"
       mx="auto"
       bg="white"
@@ -112,8 +124,8 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       border="1px solid"
       borderColor="gray.300"
       boxShadow="lg"
-      display={{ base: 'block', md: 'flex' }}
-      flexDirection={{ base: 'unset', md: 'column' }}
+      display="flex"
+      flexDirection="column"
       minH={{ base: 'auto', md: 'calc(100vh - 220px)' }}
       maxH="calc(100vh - 220px)"
       overflow="hidden"
@@ -124,10 +136,22 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         textAlign="center"
         color="gray.800"
         _dark={{ color: 'gray.100' }}
-        mb={{ base: 4, md: 10 }}
+        mb={2}
       >
         Getting to know you better
       </Text>
+
+      {currentGroup && (
+        <Text
+          fontSize={{ base: 'sm', md: 'md' }}
+          textAlign="center"
+          color="gray.500"
+          _dark={{ color: 'gray.400' }}
+          mb={{ base: 4, md: 8 }}
+        >
+          {currentGroup.title} &mdash; Step {currentGroupIndex + 1} of {visibleGroups.length}
+        </Text>
+      )}
 
       {saveError && (
         <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
@@ -147,91 +171,60 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
           '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
         }}
       >
-        <SimpleGrid
-          columns={{ base: 1, md: 3 }}
-          gap={{ base: 6, md: 6 }}
-          alignItems={{ base: 'start', md: 'stretch' }}
-        >
-          {visibleGroups.map((group) => (
-            <Box
-              key={group.id}
-              border="1px solid"
-              borderColor="gray.200"
-              _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
-              bg="gray.50"
-              boxShadow="sm"
-              borderRadius="xl"
-              p={{ base: 4, md: 5 }}
-              overflow="hidden"
-            >
-              <Text
-                textAlign="center"
-                color={{ base: 'gray.600', md: 'gray.400' }}
-                _dark={{ color: 'gray.200' }}
-                fontSize={{ base: 'lg', md: '2xl' }}
-                fontWeight="500"
-                mb={{ base: 4, md: 6 }}
-                lineHeight="1.2"
-                minH={{ base: 'auto', md: '76px' }}
-              >
-                {group.title}
-              </Text>
-
-              <Stack gap={{ base: 4, md: 4 }}>
-                {group.lifestyle_questions.map((question) => (
-                  <Box key={question.id}>
-                    <Text
-                      fontSize={{ base: 'sm', md: 'sm' }}
-                      fontWeight="500"
-                      mb={2}
-                      color="gray.700"
-                      _dark={{ color: 'gray.200' }}
+        {currentGroup && (
+          <Stack gap={{ base: 5, md: 6 }}>
+            {currentGroup.lifestyle_questions.map((question) => (
+              <Box key={question.id}>
+                <Text
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight="500"
+                  mb={2}
+                  color="gray.700"
+                  _dark={{ color: 'gray.200' }}
+                >
+                  {question.text}
+                </Text>
+                {question.type === 'free_text' ? (
+                  <Input
+                    placeholder="Type your answer..."
+                    value={freeTexts[question.id] ?? ''}
+                    onChange={(e) =>
+                      setFreeTexts((prev) => ({ ...prev, [question.id]: e.target.value }))
+                    }
+                    bg="white"
+                    _dark={{ bg: 'gray.700' }}
+                  />
+                ) : (
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={selections[question.id] ?? ''}
+                      onChange={(e) => handleSelect(question.id, e.target.value)}
+                      bg="white"
+                      _dark={{ bg: 'gray.700' }}
                     >
-                      {question.text}
-                    </Text>
-                    {question.type === 'free_text' ? (
-                      <Input
-                        placeholder="Type your answer..."
-                        value={freeTexts[question.id] ?? ''}
-                        onChange={(e) =>
-                          setFreeTexts((prev) => ({ ...prev, [question.id]: e.target.value }))
-                        }
-                        bg="white"
-                        _dark={{ bg: 'gray.700' }}
-                      />
-                    ) : (
-                      <NativeSelect.Root>
-                        <NativeSelect.Field
-                          value={selections[question.id] ?? ''}
-                          onChange={(e) => handleSelect(question.id, e.target.value)}
-                          bg="white"
-                          _dark={{ bg: 'gray.700' }}
-                        >
-                          <option value="" disabled>
-                            Select an option
-                          </option>
-                          {(question.answer_options ?? []).map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </NativeSelect.Field>
-                      </NativeSelect.Root>
-                    )}
-                  </Box>
-                ))}
-              </Stack>
-            </Box>
-          ))}
-        </SimpleGrid>
+                      <option value="" disabled>
+                        Select an option
+                      </option>
+                      {(question.answer_options ?? []).map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                )}
+              </Box>
+            ))}
+          </Stack>
+        )}
       </Box>
 
       <Flex justify="flex-end" gap={3}>
-        <Button variant="outline" colorPalette="purple" onClick={onBack}>
+        <Button variant="outline" colorPalette="purple" onClick={handleBackGroup}>
           Back
         </Button>
-        <Button colorPalette="purple" loading={saving} onClick={() => void handleNext()}>
-          Next
+        <Button colorPalette="purple" loading={saving} onClick={() => void handleNextGroup()}>
+          {isLastGroup ? 'Next' : 'Next'}
         </Button>
       </Flex>
     </Box>
