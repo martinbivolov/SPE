@@ -51,6 +51,34 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
     setSelections((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  // Disable follow-up questions until their parent question has a relevant answer selected
+  const isFollowUpEnabled = (question: typeof currentGroup.lifestyle_questions[number]) => {
+    const text = question.text.toLowerCase();
+    const questions = currentGroup?.lifestyle_questions ?? [];
+    const idx = questions.indexOf(question);
+
+    if (text.includes('if yes')) {
+      if (idx <= 0) return true;
+      const prevQuestion = questions[idx - 1];
+      const selectedOptionId = selections[prevQuestion.id];
+      if (!selectedOptionId) return false;
+      const selectedOption = prevQuestion.answer_options?.find((o) => o.id === selectedOptionId);
+      return selectedOption?.label?.toLowerCase() === 'yes';
+    }
+
+    if (text.includes('if you wear')) {
+      if (idx <= 0) return true;
+      const prevQuestion = questions[idx - 1];
+      const selectedOptionId = selections[prevQuestion.id];
+      if (!selectedOptionId) return false;
+      const selectedOption = prevQuestion.answer_options?.find((o) => o.id === selectedOptionId);
+      const label = selectedOption?.label?.toLowerCase() ?? '';
+      return label !== 'no' && label !== '' && !label.includes('never');
+    }
+
+    return true;
+  };
+
   const handleNextGroup = async () => {
     if (!isLastGroup) {
       setCurrentGroupIndex((i) => i + 1);
@@ -173,8 +201,10 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       >
         {currentGroup && (
           <Stack gap={{ base: 5, md: 6 }}>
-            {currentGroup.lifestyle_questions.map((question) => (
-              <Box key={question.id}>
+            {currentGroup.lifestyle_questions.map((question) => {
+              const enabled = isFollowUpEnabled(question);
+              return (
+              <Box key={question.id} opacity={enabled ? 1 : 0.4} pointerEvents={enabled ? 'auto' : 'none'}>
                 <Text
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
@@ -193,6 +223,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                     }
                     bg="white"
                     _dark={{ bg: 'gray.700' }}
+                    disabled={!enabled}
                   />
                 ) : (
                   <NativeSelect.Root>
@@ -214,7 +245,8 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                   </NativeSelect.Root>
                 )}
               </Box>
-            ))}
+              );
+            })}
           </Stack>
         )}
       </Box>

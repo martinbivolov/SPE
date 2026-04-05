@@ -13,7 +13,7 @@ const StageButton: React.FC<StageButtonProps> = ({
   ...props
 }) => {
   const baseStyles: ButtonProps = {
-    px: 6,
+    px: 10,
     py: 5,
     borderRadius: 'md',
     fontWeight: 600,
