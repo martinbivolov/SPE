@@ -5,7 +5,11 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import Results from '../components/Results';
 
-const DigitalTwin: React.FC = () => {
+interface DigitalTwinProps {
+  onSignOut?: () => void;
+}
+
+const DigitalTwin: React.FC<DigitalTwinProps> = ({ onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -21,7 +25,7 @@ const DigitalTwin: React.FC = () => {
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} />
+        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} onSignOut={onSignOut} />
         <Box
           flex="1"
           p={{ base: 3, md: 0 }}

@@ -12,9 +12,10 @@ interface LifestyleExplorationProps {
   userId: string;
   onNext?: () => void;
   onBack?: () => void;
+  onSignOut?: () => void;
 }
 
-const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onNext, onBack }) => {
+const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onNext, onBack, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
@@ -92,7 +93,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} />
+        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} onSignOut={onSignOut} />
         <Box
             flex="1"
             p={{ base: 3, md: 0 }}

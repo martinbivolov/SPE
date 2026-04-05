@@ -1,14 +1,15 @@
 import React from 'react';
 import { Flex, Text, Box, IconButton } from '@chakra-ui/react';
 import { useTheme } from 'next-themes';
-import { FiGrid, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
+import { FiGrid, FiMenu, FiMoon, FiSun, FiLogOut } from 'react-icons/fi';
 
 interface HeaderProps {
   title: string;
   onMenuClick?: () => void;
+  onSignOut?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut }) => {
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -56,14 +57,6 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         right={6}
         gap={2}
       >
-        <IconButton
-          aria-label="Toggle dark mode"
-          variant="ghost"
-          color="white"
-          onClick={() => setTheme(isDark ? 'light' : 'dark')}
-        >
-          {isDark ? <FiSun /> : <FiMoon />}
-        </IconButton>
         <Text mr={2}>Done Joe</Text>
         <Box
           w="32px"
@@ -78,6 +71,24 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         >
           DJ
         </Box>
+        <IconButton
+          aria-label="Toggle dark mode"
+          variant="ghost"
+          color="white"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        >
+          {isDark ? <FiSun /> : <FiMoon />}
+        </IconButton>
+        {onSignOut && (
+          <IconButton
+            aria-label="Sign out"
+            variant="ghost"
+            color="white"
+            onClick={onSignOut}
+          >
+            <FiLogOut />
+          </IconButton>
+        )}
       </Flex>
     </Flex>
   );

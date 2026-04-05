@@ -10,9 +10,10 @@ import ErrorBoundary from '../components/ErrorBoundary';
 interface SoundPreferenceProps {
   userId: string;
   onCompleted?: () => void;
+  onSignOut?: () => void;
 }
 
-const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted }) => {
+const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: story, loading, error } = useStoryRecommendation(userId);
 const toggleSidebar = () => setSidebarOpen((v) => !v);
@@ -27,7 +28,7 @@ const toggleSidebar = () => setSidebarOpen((v) => !v);
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Sound Preference" onMenuClick={toggleSidebar} />
+        <Header title="Sound Preference" onMenuClick={toggleSidebar} onSignOut={onSignOut} />
         <Box
           flex="1"
           p={0}
