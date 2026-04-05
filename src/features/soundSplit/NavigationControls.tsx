@@ -1,5 +1,6 @@
 import React from "react";
-import { Button, Flex } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
+import StageButton from '../../components/StageButton';
 
 interface NavigationControlsProps {
   onBack: () => void;
@@ -9,12 +10,12 @@ interface NavigationControlsProps {
 const NavigationControls: React.FC<NavigationControlsProps> = ({ onBack, onNext }) => {
   return (
     <Flex justify="flex-end" gap={3}>
-      <Button variant="outline" colorPalette="purple" onClick={onBack}>
+      <StageButton variantType="outline" onClick={onBack}>
         Back
-      </Button>
-      <Button colorPalette="purple" onClick={onNext}>
+      </StageButton>
+      <StageButton variantType="primary" onClick={onNext}>
         Next
-      </Button>
+      </StageButton>
     </Flex>
   );
 };

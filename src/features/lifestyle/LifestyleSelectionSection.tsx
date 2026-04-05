@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Button, Flex, Spinner, Stack, Text } from '@chakra-ui/react';
+import { Box, Flex, Spinner, Stack, Text } from '@chakra-ui/react';
+import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
 import QuotesQuestion from './QuotesQuestion';
@@ -165,37 +166,35 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
 
           {visibleQuestionCount < quotesQuestions.length && (
             <Flex justifyContent="center" mt={6}>
-              <Button
-                colorPalette="purple"
-                variant="outline"
+              <StageButton
+                variantType="outline"
                 onClick={() => setVisibleQuestionCount((prev) => Math.min(prev + 9, quotesQuestions.length))}
               >
                 Show more quotes ({Math.min(quotesQuestions.length - visibleQuestionCount, 9)} remaining)
-              </Button>
+              </StageButton>
             </Flex>
           )}
 
           {visibleQuestionCount >= quotesQuestions.length && quotesQuestions.length > 9 && (
             <Flex justifyContent="center" mt={6}>
-              <Button
-                colorPalette="purple"
-                variant="ghost"
+              <StageButton
+                variantType="subtle"
                 onClick={() => setVisibleQuestionCount(9)}
               >
                 Collapse back to first 9
-              </Button>
+              </StageButton>
             </Flex>
           )}
         </Box>
       )}
 
       <Flex justify="flex-end" gap={3}>
-        <Button variant="outline" colorPalette="purple" onClick={onBack}>
+        <StageButton variantType="outline" onClick={onBack}>
           Back
-        </Button>
-        <Button colorPalette="purple" loading={saving} onClick={() => void handleNext()}>
+        </StageButton>
+        <StageButton variantType="primary" loading={saving} onClick={() => void handleNext()}>
           Next
-        </Button>
+        </StageButton>
       </Flex>
     </Box>
   );

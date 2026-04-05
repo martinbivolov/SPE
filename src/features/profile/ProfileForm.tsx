@@ -3,11 +3,11 @@ import {
   Box,
   Stack,
   Input,
-  Button,
   Flex,
   Text,
   NativeSelect,
 } from "@chakra-ui/react";
+import StageButton from '../../components/StageButton';
 
 interface ProfileFormProps {
   onNext?: () => void;
@@ -90,13 +90,13 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onNext }) => {
         </Box>
       </Stack>
 
-      <Flex justify="flex-end" mt={6}>
-        <Button variant="outline" mr={3}>
+      <Flex justify="flex-end" mt={6} gap={3}>
+        <StageButton variantType="outline">
           Back
-        </Button>
-        <Button colorPalette="purple" onClick={onNext}>
+        </StageButton>
+        <StageButton variantType="primary" onClick={onNext}>
           Next
-        </Button>
+        </StageButton>
       </Flex>
     </Box>
   );

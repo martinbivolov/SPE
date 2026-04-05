@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   Box,
-  Button,
   Flex,
   Input,
   NativeSelect,
@@ -9,6 +8,7 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
+import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveQuizAnswers } from '../../hooks/useSaveQuizAnswers';
 import type { QuizAnswerEntry } from '../../hooks/useSaveQuizAnswers';
@@ -220,12 +220,12 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       </Box>
 
       <Flex justify="flex-end" gap={3}>
-        <Button variant="outline" colorPalette="purple" onClick={handleBackGroup}>
+        <StageButton variantType="outline" onClick={handleBackGroup}>
           Back
-        </Button>
-        <Button colorPalette="purple" loading={saving} onClick={() => void handleNextGroup()}>
-          {isLastGroup ? 'Next' : 'Next'}
-        </Button>
+        </StageButton>
+        <StageButton variantType="primary" loading={saving} onClick={() => void handleNextGroup()}>
+          Next
+        </StageButton>
       </Flex>
     </Box>
   );

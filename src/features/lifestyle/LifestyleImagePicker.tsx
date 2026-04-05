@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Box, Button, Flex, Image, SimpleGrid, Spinner, Text } from '@chakra-ui/react';
+import { Box, Flex, Image, SimpleGrid, Spinner, Text } from '@chakra-ui/react';
+import StageButton from '../../components/StageButton';
 import { useImagePickerOptions } from '../../hooks/useImagePickerOptions';
 import { useSaveImagePick } from '../../hooks/useSaveImagePick';
 
@@ -150,12 +151,12 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
       </Box>
 
       <Flex justify="flex-end" gap={3} mt="auto">
-        <Button variant="outline" colorPalette="purple" onClick={onBack}>
+        <StageButton variantType="outline" onClick={onBack}>
           Back
-        </Button>
-        <Button colorPalette="purple" loading={saveLoading} onClick={() => void handleNext()}>
+        </StageButton>
+        <StageButton variantType="primary" loading={saveLoading} onClick={() => void handleNext()}>
           Next
-        </Button>
+        </StageButton>
       </Flex>
     </Box>
   );
