@@ -4,6 +4,7 @@ import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
 import QuotesQuestion from './QuotesQuestion';
+import type { LifestyleQuestion } from '../../types/supabase.types';
 
 interface LifestyleSelectionSectionProps {
   onNext: () => void;
@@ -23,7 +24,7 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveLifestyleAnswers();
 
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  const [visibleQuestionCount, setVisibleQuestionCount] = useState(9);
 
   const questionByOption = useMemo(() => {
     const map = new Map<string, string>();
@@ -37,54 +38,42 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
     return map;
   }, [groups]);
 
-  // Groups that contain at least one quotes-type question
-  const quotesGroups = useMemo(
-    () =>
-      groups
-        .map((group) => ({
-          ...group,
-          lifestyle_questions: (group.lifestyle_questions ?? []).filter(
-            (q) => q.type === 'quotes',
-          ),
-        }))
-        .filter((g) => g.lifestyle_questions.length > 0),
-    [groups],
-  );
-
-  const currentGroup = quotesGroups[currentGroupIndex];
-  const isLastGroup = currentGroupIndex === quotesGroups.length - 1;
+  // Only quotes-type questions are rendered here; single/multi questions are
+  // handled in the previous step (SoundPreferenceQuestions) as dropdowns.
+  const quotesQuestions = useMemo(() => {
+    const quotes: LifestyleQuestion[] = [];
+    groups.forEach((group) => {
+      (group.lifestyle_questions ?? []).forEach((q) => {
+        if (q.type === 'quotes') quotes.push(q);
+      });
+    });
+    return quotes;
+  }, [groups]);
 
   const handleOptionToggle = (optionId: string) => {
-    if (!optionId) return;
+    if (!optionId) {
+      return;
+    }
+
     const isSelected = selectedOptionIds.includes(optionId);
     const updatedSelections = isSelected
       ? selectedOptionIds.filter((item) => item !== optionId)
       : [...selectedOptionIds, optionId];
+
     onSelectionChange(updatedSelections);
   };
 
-  const handleNextGroup = async () => {
-    if (!isLastGroup) {
-      setCurrentGroupIndex((i) => i + 1);
-      return;
-    }
-
+  const handleNext = async () => {
     const answers = selectedOptionIds
       .map((optionId) => ({
         questionId: questionByOption.get(optionId),
         answerOptionId: optionId,
       }))
-      .filter((a): a is { questionId: string; answerOptionId: string } => Boolean(a.questionId));
+      .filter((answer): answer is { questionId: string; answerOptionId: string } => Boolean(answer.questionId));
 
     const ok = await saveAnswers(userId, answers);
-    if (ok) onNext();
-  };
-
-  const handleBackGroup = () => {
-    if (currentGroupIndex > 0) {
-      setCurrentGroupIndex((i) => i - 1);
-    } else {
-      onBack();
+    if (ok) {
+      onNext();
     }
   };
 
@@ -111,7 +100,7 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
 
   return (
     <Box
-      maxW="1120px"
+      maxW="1280px"
       w="100%"
       mx="auto"
       bg="white"
@@ -122,32 +111,20 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
       boxShadow="lg"
       display="flex"
       flexDirection="column"
-      minH={{ base: 'auto', md: 'calc(100vh - 220px)' }}
+      minH={{ base: "auto", md: "calc(100vh - 220px)" }}
       maxH="calc(100vh - 220px)"
       overflow="hidden"
     >
       <Text
-        fontSize={{ base: 'xl', md: '4xl' }}
+        fontSize={{ base: "xl", md: "4xl" }}
         fontWeight="700"
         textAlign="center"
         color="gray.800"
         _dark={{ color: 'gray.100' }}
-        mb={2}
+        mb={{ base: 4, md: 10 }}
       >
-        Everyone listens differently. Let's understand your world.
+        Everyone listens differently. Let’s understand your world.
       </Text>
-
-      {currentGroup && (
-        <Text
-          fontSize={{ base: 'sm', md: 'md' }}
-          textAlign="center"
-          color="gray.500"
-          _dark={{ color: 'gray.400' }}
-          mb={4}
-        >
-          {currentGroup.title} &mdash; Step {currentGroupIndex + 1} of {quotesGroups.length}
-        </Text>
-      )}
 
       {saveError && (
         <Text mb={4} color="red.500" fontSize="sm" fontWeight="600">
@@ -155,21 +132,28 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
         </Text>
       )}
 
-      <Box
-        flex="1"
-        overflowY="auto"
-        mb={8}
-        p={{ base: 4, md: 6 }}
-        css={{
-          '&::-webkit-scrollbar': { width: '10px' },
-          '&::-webkit-scrollbar-track': { background: 'transparent' },
-          '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '999px' },
-          '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
-        }}
-      >
-        {currentGroup && (
+      {saving && (
+        <Text mb={4} color="gray.600" _dark={{ color: 'gray.300' }} fontSize="sm">
+          Saving selected answers...
+        </Text>
+      )}
+
+      {/* ── Quotes questions — full-width speech-bubble grid ──────────────── */}
+      {quotesQuestions.length > 0 && (
+        <Box
+          mb={8}
+          overflowY="auto"
+          maxH={{ base: 'auto', md: 'calc(100vh - 400px)' }}
+          p={{ base: 4, md: 6 }}
+          css={{
+            '&::-webkit-scrollbar': { width: '10px' },
+            '&::-webkit-scrollbar-track': { background: 'transparent' },
+            '&::-webkit-scrollbar-thumb': { background: 'rgb(168, 85, 247)', borderRadius: '999px' },
+            '&::-webkit-scrollbar-thumb:hover': { background: 'rgb(147, 51, 234)' },
+          }}
+        >
           <Stack gap={{ base: 10, md: 12 }}>
-            {currentGroup.lifestyle_questions.map((question) => (
+            {quotesQuestions.slice(0, visibleQuestionCount).map((question) => (
               <QuotesQuestion
                 key={question.id}
                 question={question}
@@ -179,18 +163,36 @@ const LifestyleSelectionSection: React.FC<LifestyleSelectionSectionProps> = ({
               />
             ))}
           </Stack>
-        )}
-      </Box>
+
+          {visibleQuestionCount < quotesQuestions.length && (
+            <Flex justifyContent="center" mt={6}>
+              <StageButton
+                variantType="outline"
+                onClick={() => setVisibleQuestionCount((prev) => Math.min(prev + 9, quotesQuestions.length))}
+              >
+                Show more quotes ({Math.min(quotesQuestions.length - visibleQuestionCount, 9)} remaining)
+              </StageButton>
+            </Flex>
+          )}
+
+          {visibleQuestionCount >= quotesQuestions.length && quotesQuestions.length > 9 && (
+            <Flex justifyContent="center" mt={6}>
+              <StageButton
+                variantType="subtle"
+                onClick={() => setVisibleQuestionCount(9)}
+              >
+                Collapse back to first 9
+              </StageButton>
+            </Flex>
+          )}
+        </Box>
+      )}
 
       <Flex justify="flex-end" gap={3}>
-        <StageButton variantType="outline" onClick={handleBackGroup}>
+        <StageButton variantType="outline" onClick={onBack}>
           Back
         </StageButton>
-        <StageButton
-          variantType="primary"
-          loading={saving}
-          onClick={() => void handleNextGroup()}
-        >
+        <StageButton variantType="primary" loading={saving} onClick={() => void handleNext()}>
           Next
         </StageButton>
       </Flex>
