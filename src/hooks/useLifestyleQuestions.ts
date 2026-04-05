@@ -66,6 +66,7 @@ export const useLifestyleQuestions = (): LifestyleQuestionsResult => {
 								if (opt == null) return [];
 								return Array.isArray(opt) ? opt : [opt];
 							})
+							.filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i)
 							.slice()
 							.sort((a, b) => a.sort_order - b.sort_order),
 					})),
