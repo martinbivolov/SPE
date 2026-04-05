@@ -111,7 +111,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
 
   return (
     <Box
-      maxW="1280px"
+      maxW="1120px"
       w="100%"
       mx="auto"
       bg="white"
@@ -191,7 +191,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
           loading={saving}
           onClick={() => void handleNextGroup()}
         >
-          {isLastGroup ? 'Finish' : 'Next'}
+          Next
         </StageButton>
       </Flex>
     </Box>

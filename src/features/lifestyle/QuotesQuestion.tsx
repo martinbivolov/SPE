@@ -42,7 +42,7 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
               as="button"
               onClick={() => onToggle(option.id)}
               textAlign="left"
-              p={{ base: 4, md: 5 }}
+              p={{ base: 3, md: 4 }}
               borderRadius="xl"
               border="2px solid"
               borderColor={selected ? 'purple.400' : 'gray.200'}
@@ -65,7 +65,7 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
             >
               {/* Large decorative opening quote */}
               <Text
-                fontSize="5xl"
+                fontSize="4xl"
                 lineHeight="0.6"
                 color={selected ? 'green.300' : 'purple.200'}
                 _dark={{
@@ -96,7 +96,7 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
 
               {/* Closing quote */}
               <Text
-                fontSize="5xl"
+                fontSize="4xl"
                 lineHeight="0.6"
                 color={selected ? 'green.300' : 'purple.200'}
                 _dark={{
