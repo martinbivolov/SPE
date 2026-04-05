@@ -8,6 +8,7 @@ import LifestyleImagePicker from '../features/lifestyle/LifestyleImagePicker';
 import Footer from '../components/layout/Footer';
 import LifestyleSelectionSectionMulti from '../features/lifestyle/LifestyleSelectionSectionMulti';
 import SoundExplorationWelcome from '../components/SoundExplorationWelcome';
+import SoundTutorial from '../components/SoundTutorial';
 
 interface LifestyleExplorationProps {
   userId: string;
@@ -27,7 +28,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   };
 
   const handleNext = () => {
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       onNext?.();
     } else {
       setCurrentStep(currentStep + 1);
@@ -84,6 +85,13 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
         return (
           <SoundExplorationWelcome
             onStart={handleNext}
+            onBack={handleBack}
+          />
+        );
+      case 5:
+        return (
+          <SoundTutorial
+            onNext={handleNext}
             onBack={handleBack}
           />
         );
