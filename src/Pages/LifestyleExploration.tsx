@@ -26,7 +26,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   };
 
   const handleNext = () => {
-    if (currentStep === 2) {
+    if (currentStep === 3) {
       onNext?.();
     } else {
       setCurrentStep(currentStep + 1);
