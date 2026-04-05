@@ -6,10 +6,11 @@ import Footer from '../components/layout/Footer';
 import Results from '../components/Results';
 
 interface DigitalTwinProps {
+  userId: string;
   onSignOut?: () => void;
 }
 
-const DigitalTwin: React.FC<DigitalTwinProps> = ({ onSignOut }) => {
+const DigitalTwin: React.FC<DigitalTwinProps> = ({ userId, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -33,9 +34,9 @@ const DigitalTwin: React.FC<DigitalTwinProps> = ({ onSignOut }) => {
           display="flex"
           flexDirection="column"
           alignItems={{ base: "stretch", md: "center" }}
-          justifyContent={{ base: "flex-start", md: "center" }}
+          justifyContent="flex-start"
         >
-          <Results />
+          <Results userId={userId} />
         </Box>
         <Footer />
       </Flex>

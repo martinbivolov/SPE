@@ -33,7 +33,7 @@ function App() {
         <Route path="/sound" element={<SoundPreference userId={user.id} onCompleted={() => navigate('/digital-twin')} onSignOut={() => void signOut()} />} />
         <Route path="/lifestyle" element={<LifestyleExploration userId={user.id} onNext={() => navigate('/story-intro')} onBack={() => navigate('/sound')} onSignOut={() => void signOut()} />} />
         <Route path="/story-intro" element={<StoryIntro onComplete={() => navigate('/sound')} />} />
-        <Route path="/digital-twin" element={<DigitalTwin onSignOut={() => void signOut()} />} />
+        <Route path="/digital-twin" element={<DigitalTwin userId={user.id} onSignOut={() => void signOut()} />} />
       </Routes>
     </>
   );
