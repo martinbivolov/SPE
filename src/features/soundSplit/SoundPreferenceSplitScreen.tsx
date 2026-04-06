@@ -39,7 +39,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const [activeElements, setActiveElements] = useState<string[]>([]);
 	const [sessionPhase, setSessionPhase] = useState<SessionPhase>('story-intro');
 	const [caption, setCaption] = useState('');
-	const [videoSrc, setVideoSrc] = useState('');
+	const [videoSrc, setVideoSrc] = useState<string | null>(null);
 	const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 	const [sequenceMode, setSequenceMode] = useState<SequenceMode>('intro');
 	const [objectsInteractive, setObjectsInteractive] = useState(false);
@@ -66,8 +66,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		name: `${currentScene?.name ?? ''} - Version 1`,
 		backgroundImageUrl: currentVersion?.background_image_url ?? '',
 		audioLabel: 'Version 1',
-		audioUrl: currentVersion?.video_a_url ?? '',
-		videoUrl: currentVersion?.video_a_url ?? '',
+		audioUrl: currentVersion?.video_a_url ?? null,
+		videoUrl: currentVersion?.video_a_url ?? null,
 		elements: currentVersion?.interactive_enabled
 			? (currentVersion.scene_objects ?? []).map((obj) => ({
 					id: `a-${obj.id}`,
@@ -81,14 +81,17 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			: [],
 	}), [currentScene?.name, currentVersion]);
 
+	console.log('[splitscreen] currentVersion:', JSON.stringify(currentVersion, null, 2));
+	console.log('[splitscreen] sceneA elements:', sceneA.elements);
+
 	const sceneB = useMemo<SceneData>(() => ({
 		id: `${currentVersion?.id ?? 'none'}-b`,
 		side: 'B',
 		name: `${currentScene?.name ?? ''} - Version 2`,
 		backgroundImageUrl: currentVersion?.background_image_url ?? '',
 		audioLabel: 'Version 2',
-		audioUrl: currentVersion?.video_b_url ?? '',
-		videoUrl: currentVersion?.video_b_url ?? '',
+		audioUrl: currentVersion?.video_b_url ?? null,
+		videoUrl: currentVersion?.video_b_url ?? null,
 		elements: currentVersion?.interactive_enabled
 			? (currentVersion.scene_objects ?? []).map((obj) => ({
 					id: `b-${obj.id}`,
@@ -101,6 +104,13 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				}))
 			: [],
 	}), [currentScene?.name, currentVersion]);
+
+	console.log('[splitscreen] sceneB elements:', sceneB.elements);
+	console.log(
+		'[splitscreen] interactive_enabled:', currentVersion?.interactive_enabled,
+		'objectsInteractive:', objectsInteractive,
+		'sessionPhase:', sessionPhase
+	);
 
 	const scenes = useMemo(() => [sceneA, sceneB], [sceneA, sceneB]);
 
@@ -128,7 +138,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 	// Play a src through the VideoPlayer: stop first, then start after a tick
 	// so the VideoPlayer element re-mounts / resets before playing the new src.
-	const playSrc = useCallback((src: string) => {
+	const playSrc = useCallback((src: string | null) => {
 		setIsVideoPlaying(false);
 		setVideoSrc(src);
 		schedule(50, () => setIsVideoPlaying(true));
@@ -268,7 +278,13 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				beginWiggleWindow();
 				return;
 			}
-			startVideoB(sequenceMode === 'both' ? 'both' : 'intro', SWEEP_MS);
+			// 6 second pause between video A and video B
+			setIsVideoPlaying(false);
+			setSessionPhase('between-videos');
+			setCaption('');
+			schedule(6000, () => {
+				startVideoB(sequenceMode === 'both' ? 'both' : 'intro', SWEEP_MS);
+			});
 			return;
 		}
 		// Video B finished → go to replay
@@ -494,6 +510,36 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 							{sessionPhase === 'story-intro'
 								? story.name
 								: currentScene?.name ?? ''}
+						</Text>
+					</Flex>
+				)}
+
+				{sessionPhase === 'between-videos' && (
+					<Flex
+						position="absolute"
+						inset={0}
+						align="center"
+						justify="center"
+						zIndex={10}
+						bg="blackAlpha.800"
+						direction="column"
+						gap={4}
+					>
+						<Text
+							color="white"
+							fontSize={{ base: 'xl', md: '3xl' }}
+							fontWeight="600"
+							textAlign="center"
+							px={8}
+						>
+							Now listen to Version 2
+						</Text>
+						<Text
+							color="whiteAlpha.700"
+							fontSize={{ base: 'sm', md: 'md' }}
+							textAlign="center"
+						>
+							Starting in a moment...
 						</Text>
 					</Flex>
 				)}

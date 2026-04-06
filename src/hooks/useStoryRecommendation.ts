@@ -140,13 +140,40 @@ export const useStoryRecommendation = (
           );
         }
 
+        console.log('[story] raw scene versions:',
+          JSON.stringify(rawScenes?.map(s => ({
+            name: s.name,
+            versions: s.scene_versions?.map((v: any) => ({
+              id: v.id,
+              active: v.active,
+              interactive_enabled: v.interactive_enabled,
+              object_count: v.scene_objects?.length
+            }))
+          })), null, 2)
+        );
+
+        console.log('[raw] first scene name:', rawScenes?.[0]?.name,
+          'scene_versions:', rawScenes?.[0]?.scene_versions
+        );
+
         // Normalise: prefer the first active version, fall back to any version.
 
         const scenes: LoadedScene[] = ((rawScenes ?? []) as any[]).map((scene) => {
-  
-          const versions: any[] = scene.scene_versions ?? [];
+
+          const rawVersions = scene.scene_versions;
+          const versions: any[] = Array.isArray(rawVersions)
+            ? rawVersions
+            : rawVersions
+              ? [rawVersions]
+              : [];
           const chosen =
             versions.find((v) => v.active === true) ?? versions[0] ?? null;
+
+          console.log('[norm] scene:', scene.name,
+            'total versions:', versions.length,
+            'active versions:', versions.filter((v: any) => v.active === true).length,
+            'chosen id:', chosen?.id ?? 'NULL'
+          );
 
           return {
             id: scene.id as string,
@@ -166,6 +193,15 @@ export const useStoryRecommendation = (
                 }
               : null,
           };
+        });
+
+        scenes.forEach(scene => {
+          console.log(
+            '[story] scene:', scene.name,
+            'version:', scene.version?.id,
+            'objects:', scene.version?.scene_objects?.length,
+            scene.version?.scene_objects
+          );
         });
 
         const result = {

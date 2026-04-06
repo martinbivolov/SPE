@@ -24,6 +24,7 @@ const SceneB: React.FC<SceneBProps> = ({
   showOverlay = true,
   onHoldChange,
 }) => {
+  console.log('[sceneB] elements received:', scene.elements);
   return (
     <Box
       position="absolute"

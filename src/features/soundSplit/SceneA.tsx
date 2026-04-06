@@ -23,6 +23,7 @@ const SceneA: React.FC<SceneAProps> = ({
   tutorialObjectId,
   tutorialObjectRef,
 }) => {
+  console.log('[sceneA] elements received:', scene.elements);
   return (
     <Box position="absolute" inset={0} zIndex={0} overflow="hidden">
       <Image src={scene.backgroundImageUrl} alt={scene.name} w="100%" h="100%" objectFit="cover" />

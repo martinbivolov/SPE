@@ -4,6 +4,7 @@ export type SessionPhase =
   | "story-intro"
   | "scene-narration"
   | "videoA"
+  | "between-videos"
   | "videoB"
   | "replay"
   | "preference"
@@ -28,8 +29,8 @@ export interface SceneData {
   name: string;
   backgroundImageUrl: string;
   audioLabel: string;
-  audioUrl: string;
-  videoUrl: string;
+  audioUrl: string | null;
+  videoUrl: string | null;
   elements: SceneElement[];
 }
 

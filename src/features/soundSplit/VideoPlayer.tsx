@@ -3,7 +3,7 @@ import { Box, Button, IconButton } from "@chakra-ui/react";
 import { FiVolume2, FiVolumeX } from "react-icons/fi";
 
 interface VideoPlayerProps {
-  src: string;
+  src: string | null;
   isPlaying: boolean;
   onEnded: () => void;
   showProgress?: boolean;
@@ -98,7 +98,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     <Box position="absolute" inset={0} zIndex={3} bg="black" w="100%" h="100%">
       <video
         ref={videoRef}
-        src={src}
+        src={src || undefined}
         preload="auto"
         playsInline
         muted={isMuted}

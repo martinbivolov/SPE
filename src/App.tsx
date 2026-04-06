@@ -7,6 +7,7 @@ import SignIn from './Pages/SignIn';
 import { useAuth } from './hooks/useAuth';
 import StoryIntro from './components/StoryIntro';
 import ProfileForm from './features/profile/ProfileForm';
+import AdminSceneEditor from './Pages/AdminSceneEditor';
 
 function App() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ function App() {
         <Route path="/lifestyle" element={<LifestyleExploration userId={user.id} onNext={() => navigate('/story-intro')} onBack={() => navigate('/sound')} onSignOut={() => void signOut()} />} />
         <Route path="/story-intro" element={<StoryIntro onComplete={() => navigate('/sound')} />} />
         <Route path="/digital-twin" element={<DigitalTwin userId={user.id} onSignOut={() => void signOut()} />} />
+        <Route path="/admin/scene-editor" element={<AdminSceneEditor />} />
       </Routes>
     </>
   );
