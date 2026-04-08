@@ -22,6 +22,7 @@ interface StrengthModalProps {
   onSubmit: (strength: 1 | 2 | 3 | 4 | 5) => Promise<void> | void;
   isSubmitting?: boolean;
   submitError?: string | null;
+  title?: string;
 }
 
 interface ModalShellProps {
@@ -226,6 +227,7 @@ export const StrengthModal: React.FC<StrengthModalProps> = ({
   onSubmit,
   isSubmitting = false,
   submitError,
+  title,
 }) => {
   const strengthOptions: OptionConfig[] = [
     {
@@ -269,7 +271,7 @@ export const StrengthModal: React.FC<StrengthModalProps> = ({
     <QuestionModal
       isOpen={isOpen}
       step={3}
-      title="How strong was your preference?"
+      title={title ?? 'How strong was your preference?'}
       subtitle={preferredVersion ? `Preferred version: ${preferredVersion === 'A' ? 'Version 1' : 'Version 2'}` : undefined}
       options={strengthOptions}
       isSubmitting={isSubmitting}

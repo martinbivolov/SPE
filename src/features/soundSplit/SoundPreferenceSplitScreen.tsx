@@ -48,12 +48,15 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const [tutorialStep, setTutorialStep] = useState(1);
 	const [preferredVersion, setPreferredVersion] = useState<'A' | 'B' | null>(null);
 	const [strengthRating, setStrengthRating] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
+	const [postPreference, setPostPreference] = useState<'A' | 'B' | null>(null);
+	const [postStrength, setPostStrength] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
 
 	const infoButtonRef = useRef<HTMLButtonElement | null>(null);
 	const dividerRef = useRef<HTMLDivElement | null>(null);
 	const objectRef = useRef<HTMLDivElement | null>(null);
 	const timeoutIdsRef = useRef<number[]>([]);
 	const hasPlayedIntro = useRef(false);
+	const hasUsedReplay = useRef(false);
 
 	const { saveResult, loading: resultLoading, error: resultError } = useSaveSessionResult();
 
@@ -201,12 +204,21 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 	const snapToInteractiveReplay = useCallback(() => {
 		setIsVideoPlaying(false);
-		setSessionPhase('replay');
-		setCaption('Replay options: Version 1, Version 2, or both.');
 		setDividerX(50);
 		setActiveElements([]);
 		setIsTutorialActive(false);
 		beginWiggleWindow();
+
+		console.log('[replay] hasUsedReplay:', hasUsedReplay.current);
+		if (hasUsedReplay.current) {
+			// Replay already used — skip straight to preference
+			setSessionPhase('preference');
+			setCaption('Which version did you prefer?');
+		} else {
+			// First time — show replay options
+			setSessionPhase('replay');
+			setCaption('Replay options: Version 1, Version 2, or both.');
+		}
 	}, [beginWiggleWindow]);
 
 	// ── Step functions — defined before handleVideoEnded so they can be referenced ──
@@ -270,12 +282,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		// Video A finished
 		if (sessionPhase === 'videoA') {
 			if (sequenceMode === 'singleA') {
-				setIsVideoPlaying(false);
-				setSessionPhase('replay');
-				setCaption('Replay options: Version 1, Version 2, or both.');
-				setDividerX(50);
 				setSequenceMode('intro');
-				beginWiggleWindow();
+				snapToInteractiveReplay();
 				return;
 			}
 			// 6 second pause between video A and video B
@@ -331,11 +339,14 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			return;
 		}
 		if (sessionPhase === 'exploration') {
-			handleContinueFromExploration();
+			setSessionPhase('post-preference');
+			setCaption('After exploring — which version do you still prefer?');
+			return;
 		}
-	}, [sessionPhase, handleContinueFromExploration]);
+	}, [sessionPhase]);
 
 	const handleSkipReplay = () => {
+		hasUsedReplay.current = true;
 		setSessionPhase('preference');
 		setCaption('Which version did you prefer?');
 	};
@@ -356,8 +367,11 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		setIsTutorialActive(false);
 		setPreferredVersion(null);
 		setStrengthRating(null);
+		setPostPreference(null);
+		setPostStrength(null);
 		setObjectsInteractive(false);
 		setWiggleObjects(false);
+		hasUsedReplay.current = false;
 
 		if (!hasPlayedIntro.current) {
 			hasPlayedIntro.current = true;
@@ -499,18 +513,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 						justify="center"
 						zIndex={5}
 					>
-						<Text
-							color="white"
-							fontSize={{ base: 'lg', md: '2xl' }}
-							fontWeight="500"
-							textAlign="center"
-							px={8}
-							textShadow="0 1px 3px rgba(0,0,0,0.8)"
-						>
-							{sessionPhase === 'story-intro'
-								? story.name
-								: currentScene?.name ?? ''}
-						</Text>
 					</Flex>
 				)}
 
@@ -544,14 +546,16 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					</Flex>
 				)}
 
-				<DividerControl
-					dividerX={dividerX}
-					isInteractive={!isPlayerActive && !isTutorialActive && isInteractivePhase}
-					isAnimating={isDividerAnimating}
-					animationDurationMs={dividerAnimationMs}
-					onDividerChange={setDividerX}
-					dividerRef={dividerRef}
-				/>
+				{!isNarrationPhase && (
+					<DividerControl
+						dividerX={dividerX}
+						isInteractive={!isPlayerActive && !isTutorialActive && isInteractivePhase}
+						isAnimating={isDividerAnimating}
+						animationDurationMs={dividerAnimationMs}
+						onDividerChange={setDividerX}
+						dividerRef={dividerRef}
+					/>
+				)}
 
 				{isVideoPhase && (
 					<Box
@@ -644,6 +648,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 						currentVersion.id,
 						preferredVersion,
 						strength,
+						'pre',
 					);
 					if (!saved) return;
 					setSessionPhase('exploration');
@@ -657,10 +662,51 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 			<ReplayOptionsModal
 				isOpen={sessionPhase === 'replay'}
-				onReplayFirst={() => startVideoA('singleA', REPLAY_SWEEP_MS)}
-				onReplaySecond={() => startVideoB('singleB', REPLAY_SWEEP_MS)}
-				onReplayBoth={() => startVideoA('both', REPLAY_SWEEP_MS)}
+				onReplayFirst={() => {
+					hasUsedReplay.current = true;
+					startVideoA('singleA', REPLAY_SWEEP_MS);
+				}}
+				onReplaySecond={() => {
+					hasUsedReplay.current = true;
+					startVideoB('singleB', REPLAY_SWEEP_MS);
+				}}
+				onReplayBoth={() => {
+					hasUsedReplay.current = true;
+					startVideoA('both', REPLAY_SWEEP_MS);
+				}}
 				onSkipReplay={handleSkipReplay}
+			/>
+
+			<PreferenceModal
+				isOpen={sessionPhase === 'post-preference'}
+				selectedVersion={postPreference}
+				onSelect={(version) => {
+					setPostPreference(version);
+					setSessionPhase('post-strength');
+					setCaption('After exploring, how strong is your preference now?');
+				}}
+			/>
+
+			<StrengthModal
+				isOpen={sessionPhase === 'post-strength'}
+				preferredVersion={postPreference}
+				selectedStrength={postStrength}
+				title="After exploring, how strong is your preference now?"
+				onSubmit={async (strength) => {
+					setPostStrength(strength);
+					if (!postPreference || !currentVersion?.id) return;
+					const saved = await saveResult(
+						userId,
+						currentVersion.id,
+						postPreference,
+						strength,
+						'post',
+					);
+					if (!saved) return;
+					handleContinueFromExploration();
+				}}
+				isSubmitting={resultLoading}
+				submitError={resultError}
 			/>
 		</Box>
 	);

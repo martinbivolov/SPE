@@ -10,6 +10,8 @@ export type SessionPhase =
   | "preference"
   | "strength"
   | "exploration"
+  | "post-preference"
+  | "post-strength"
   | "filler"
   | "complete";
 

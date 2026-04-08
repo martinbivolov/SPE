@@ -9,7 +9,8 @@ interface SaveSessionResultResult {
 		userId: string,
 		sceneVersionId: string,
 		preferredVersion: 'A' | 'B',
-		preferenceStrength: number
+		preferenceStrength: number,
+		explorationPhase?: 'pre' | 'post'
 	) => Promise<boolean>;
 }
 
@@ -22,7 +23,8 @@ export const useSaveSessionResult = (): SaveSessionResultResult => {
 		userId: string,
 		sceneVersionId: string,
 		preferredVersion: 'A' | 'B',
-		preferenceStrength: number
+		preferenceStrength: number,
+		explorationPhase?: 'pre' | 'post'
 	) => {
 		setLoading(true);
 		setError(null);
@@ -32,6 +34,7 @@ export const useSaveSessionResult = (): SaveSessionResultResult => {
 			scene_version_id: sceneVersionId,
 			preferred_version: preferredVersion,
 			preference_strength: preferenceStrength,
+			...(explorationPhase !== undefined ? { exploration_phase: explorationPhase } : {}),
 		});
 
 		setLoading(false);
