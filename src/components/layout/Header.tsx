@@ -7,11 +7,19 @@ interface HeaderProps {
   title: string;
   onMenuClick?: () => void;
   onSignOut?: () => void;
+  userName?: string | null;
+  userEmail?: string | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut }) => {
+const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut, userName, userEmail }) => {
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
+
+  const initials = userName
+    ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : userEmail
+      ? userEmail[0].toUpperCase()
+      : '?';
 
   return (
     <Flex
@@ -57,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut }) => {
         right={6}
         gap={2}
       >
-        <Text mr={2}>Done Joe</Text>
+        <Text mr={2}>{userName ?? userEmail ?? 'Guest'}</Text>
         <Box
           w="32px"
           h="32px"
@@ -69,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut }) => {
           fontSize="sm"
           fontWeight="bold"
         >
-          DJ
+          {initials}
         </Box>
         <IconButton
           aria-label="Toggle dark mode"

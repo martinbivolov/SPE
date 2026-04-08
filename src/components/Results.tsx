@@ -12,6 +12,21 @@ interface UserAnswer {
   answer_option_label: string | null;
 }
 
+interface SceneResult {
+  id: string;
+  completed_at: string;
+  preferred_version: 'A' | 'B';
+  preference_strength: number;
+  exploration_phase: 'pre' | 'post';
+  scene_name: string;
+  video_a_url: string;
+  video_b_url: string;
+}
+
+interface ProcessedResult extends SceneResult {
+  post: SceneResult | null;
+}
+
 interface ResultsProps {
   userId: string;
 }
@@ -25,13 +40,14 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
 
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [imagePicks, setImagePicks] = useState<string[]>([]);
+  const [soundResults, setSoundResults] = useState<SceneResult[]>([]);
   const [answersLoading, setAnswersLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       setAnswersLoading(true);
 
-      const [answersRes, picksRes] = await Promise.all([
+      const [answersRes, picksRes, soundRes] = await Promise.all([
         supabase
           .from("lifestyle_answers")
           .select("question_id, answer_option_id, free_text_answer, answer_options(label)")
@@ -40,6 +56,22 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
           .from("image_picker_responses")
           .select("chosen_id")
           .eq("user_id", userId),
+        supabase
+          .from("session_results")
+          .select(`
+            id,
+            completed_at,
+            preferred_version,
+            preference_strength,
+            exploration_phase,
+            scene_versions (
+              video_a_url,
+              video_b_url,
+              scenes ( name )
+            )
+          `)
+          .eq("user_id", userId)
+          .order("completed_at", { ascending: true }),
       ]);
 
       const mapped = (answersRes.data ?? []).map((row: Record<string, unknown>) => ({
@@ -55,6 +87,18 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
         ...new Set((picksRes.data ?? []).map((p: { chosen_id: string }) => p.chosen_id)),
       ];
       setImagePicks(uniqueIds);
+
+      const normalisedSound = (soundRes.data ?? []).map((row: any) => ({
+        id: row.id,
+        completed_at: row.completed_at,
+        preferred_version: row.preferred_version,
+        preference_strength: row.preference_strength,
+        exploration_phase: row.exploration_phase ?? 'pre',
+        scene_name: row.scene_versions?.scenes?.name ?? 'Unknown',
+        video_a_url: row.scene_versions?.video_a_url ?? '',
+        video_b_url: row.scene_versions?.video_b_url ?? '',
+      }));
+      setSoundResults(normalisedSound);
 
       setAnswersLoading(false);
     };
@@ -112,6 +156,28 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
   const toggleLifestyle = (key: string) => {
     setOpenLifestyle(openLifestyle === key ? null : key);
   };
+
+  const strengthLabel = (strength: number): string => {
+    const labels: Record<number, string> = {
+      1: 'Very Weak',
+      2: 'Weak',
+      3: 'Hesitant',
+      4: 'Strong',
+      5: 'Very Strong',
+    };
+    return labels[strength] ?? 'Unknown';
+  };
+
+  const processedSoundResults = useMemo((): ProcessedResult[] => {
+    const pre = soundResults.filter(r => r.exploration_phase === 'pre');
+    const post = soundResults.filter(r => r.exploration_phase === 'post');
+    return pre.map(preResult => {
+      const postResult = post.find(p => p.scene_name === preResult.scene_name);
+      const changed = postResult &&
+        postResult.preferred_version !== preResult.preferred_version;
+      return { ...preResult, post: changed ? postResult : null };
+    });
+  }, [soundResults]);
 
   const isLoading = groupsLoading || imagesLoading || answersLoading;
 
@@ -225,52 +291,64 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
         <div>Variant</div>
       </div>
 
-      {["1", "2", "3", "4"].map((id, i) => (
-        <div key={id}>
-          <div
-            className="dt-row dt-main"
-            onClick={() =>
-              setOpenSound(openSound === id ? null : id)
-            }
-          >
-            <div>{openSound === id ? "▼" : "▶"}</div>
-            <div>2026-09-07 14:38:03</div>
-            <div>
-              {["Strong", "Weak", "Hesitant", "Strong"][i]}
-            </div>
-            <div>
-              {
-                [
-                  "Prefer first variant",
-                  "Prefer second variant",
-                  "Prefer first variant",
-                  "Prefer first variant",
-                ][i]
-              }
-            </div>
-          </div>
-
-          {openSound === id && (
-            <div className="dt-audio">
-              <div className="dt-audio-grid">
-                <div>
-                  <p>Variant A</p>
-                  <audio controls>
-                    <source src="/audio/sample-a.mp3" />
-                  </audio>
-                </div>
-
-                <div>
-                  <p>Variant B</p>
-                  <audio controls>
-                    <source src="/audio/sample-b.mp3" />
-                  </audio>
-                </div>
+      {processedSoundResults.length === 0 ? (
+        <div className="dt-row dt-alt">
+          <div></div>
+          <div>No results yet</div>
+          <div>—</div>
+          <div>—</div>
+        </div>
+      ) : (
+        processedSoundResults.map((result) => (
+          <div key={result.id}>
+            <div
+              className="dt-row dt-main"
+              onClick={() => setOpenSound(openSound === result.id ? null : result.id)}
+            >
+              <div>{openSound === result.id ? '▼' : '▶'}</div>
+              <div>{new Date(result.completed_at).toLocaleString()}</div>
+              <div>{strengthLabel(result.preference_strength)}</div>
+              <div>
+                {result.preferred_version === 'A'
+                  ? 'Prefer first variant'
+                  : 'Prefer second variant'}
               </div>
             </div>
-          )}
-        </div>
-      ))}
+
+            {result.post && (
+              <div className="dt-row dt-alt">
+                <div></div>
+                <div>After exploring</div>
+                <div>{strengthLabel(result.post.preference_strength)}</div>
+                <div>
+                  {result.post.preferred_version === 'A'
+                    ? 'Still prefer first variant'
+                    : 'Changed to second variant'}
+                </div>
+              </div>
+            )}
+
+            {openSound === result.id && (
+              <div className="dt-audio">
+                <div className="dt-audio-grid">
+                  <div>
+                    <p>Variant A</p>
+                    <audio controls>
+                      <source src={result.video_a_url} />
+                    </audio>
+                  </div>
+                  <div>
+                    <p>Variant B</p>
+                    <audio controls>
+                      <source src={result.video_b_url} />
+                    </audio>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 };

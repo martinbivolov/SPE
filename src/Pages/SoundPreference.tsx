@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import SoundPreferenceSplitScreen from '../features/soundSplit/SoundPreferenceSplitScreen';
 import { useStoryRecommendation } from '../hooks/useStoryRecommendation';
+import { useProfile } from '../hooks/useProfile';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 interface SoundPreferenceProps {
@@ -16,6 +17,7 @@ interface SoundPreferenceProps {
 const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: story, loading, error } = useStoryRecommendation(userId);
+  const profile = useProfile(userId);
 const toggleSidebar = () => setSidebarOpen((v) => !v);
   const handleNext = () => onCompleted?.();
 
@@ -28,7 +30,7 @@ const toggleSidebar = () => setSidebarOpen((v) => !v);
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Sound Preference" onMenuClick={toggleSidebar} onSignOut={onSignOut} />
+        <Header title="Sound Preference" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
         <Box
           flex="1"
           p={0}

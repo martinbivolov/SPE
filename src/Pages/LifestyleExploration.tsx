@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Flex, Box } from '@chakra-ui/react';
 import Sidebar from '../components/layout/Sidebar';
 import Header from '../components/layout/Header';
+import { useProfile } from '../hooks/useProfile';
 import SoundPreferenceQuestions from '../features/soundSplit/SoundPreferenceQuestions';
 import LifestyleSelectionSection from '../features/lifestyle/LifestyleSelectionSection';
 import LifestyleImagePicker from '../features/lifestyle/LifestyleImagePicker';
@@ -23,6 +24,8 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [selectedLifestyleImages, setSelectedLifestyleImages] = useState<string[]>([]);
+
+  const profile = useProfile(userId);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -117,7 +120,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} onSignOut={onSignOut} />
+        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
         <Box
             flex="1"
             p={{ base: 3, md: 0 }}

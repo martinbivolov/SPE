@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Header from '../components/layout/Header';
+import { useProfile } from '../hooks/useProfile';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import Results from '../components/Results';
@@ -12,6 +13,7 @@ interface DigitalTwinProps {
 
 const DigitalTwin: React.FC<DigitalTwinProps> = ({ userId, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const profile = useProfile(userId);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -26,7 +28,7 @@ const DigitalTwin: React.FC<DigitalTwinProps> = ({ userId, onSignOut }) => {
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} onSignOut={onSignOut} />
+        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
         <Box
           flex="1"
           p={{ base: 3, md: 0 }}
