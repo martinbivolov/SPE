@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Box, Flex, Text, Icon, SimpleGrid } from '@chakra-ui/react';
 import { FiHeadphones, FiWifi, FiVolumeX } from 'react-icons/fi';
 import StageButton from './StageButton';
+import { useVolume } from '../contexts/VolumeContext';
 
-type ConnectionChoice = 'wired' | 'wireless' | 'none' | null;
+type ConnectionChoice = 'wired' | 'wireless' | null;
 
 interface HeadphoneSetupProps {
   onNext: () => void;
@@ -13,12 +14,12 @@ interface HeadphoneSetupProps {
 const connectionOptions: { key: ConnectionChoice; label: string; icon: React.ElementType; description: string }[] = [
   { key: 'wired', label: 'By Wire', icon: FiHeadphones, description: 'Plug in your headphones' },
   { key: 'wireless', label: 'Wireless', icon: FiWifi, description: 'Bluetooth or wireless' },
-  { key: 'none', label: 'Without Either', icon: FiVolumeX, description: 'Use device speakers' },
 ];
 
 const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
   const [choice, setChoice] = useState<ConnectionChoice>(null);
-  const [volume, setVolume] = useState(50);
+  const { volume, setVolume } = useVolume();
+  const volumePct = Math.round(volume * 100);
 
   return (
     <Box
@@ -60,7 +61,7 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
       </Text>
 
       {/* Cards */}
-      <SimpleGrid columns={{ base: 1, md: 3 }} gap={5} mb={8}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={5} mb={8} maxW="600px" mx="auto" w="100%">
         {connectionOptions.map((opt) => {
           const selected = choice === opt.key;
           return (
@@ -164,7 +165,7 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
                 top="0"
                 left="0"
                 h="8px"
-                w={`${volume}%`}
+                w={`${volumePct}%`}
                 borderRadius="full"
                 bg="purple.400"
                 transition="width 0.1s ease"
@@ -174,8 +175,8 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
                 type="range"
                 min={0}
                 max={100}
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
+                value={volumePct}
+                onChange={(e) => setVolume(Number(e.target.value) / 100)}
                 style={{
                   position: 'absolute',
                   top: '-4px',
@@ -191,7 +192,7 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
               <Box
                 position="absolute"
                 top="-6px"
-                left={`${volume}%`}
+                left={`${volumePct}%`}
                 transform="translateX(-50%)"
                 w="20px"
                 h="20px"
@@ -208,7 +209,7 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
           </Flex>
 
           <Text fontSize="sm" fontWeight="600" color="purple.500" _dark={{ color: 'purple.300' }}>
-            {volume}%
+            {volumePct}%
           </Text>
         </Flex>
       )}

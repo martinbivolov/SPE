@@ -136,21 +136,33 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
               position="relative"
               overflow="hidden"
               borderRadius="xl"
-              border="2px solid"
+              border="3px solid"
               borderColor={selected ? "purple.400" : "gray.200"}
               _dark={{ borderColor: selected ? 'purple.300' : 'gray.600' }}
               bg={selected ? 'purple.50' : 'gray.50'}
               boxShadow={selected ? "md" : "sm"}
-              _hover={{ boxShadow: "lg", borderColor: "purple.300" }}
+              _hover={{ boxShadow: "lg", borderColor: "purple.500", transform: "translateY(-2px)" }}
+              transition="all 0.2s ease"
               _focusVisible={{ outline: "2px solid", outlineColor: "purple.400" }}
             >
               <Image src={option.image_url} alt={option.label ?? ''} w="100%" h={{ base: "120px", md: "140px" }} objectFit="cover" />
+              {/* Dark gradient for readability */}
               <Box
                 position="absolute"
                 inset={0}
                 bgGradient="linear(to-t, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.65) 100%)"
                 pointerEvents="none"
               />
+              {/* Purple overlay when selected */}
+              {selected && (
+                <Box
+                  position="absolute"
+                  inset={0}
+                  bg="rgba(128, 90, 213, 0.55)"
+                  pointerEvents="none"
+                  transition="opacity 0.2s ease"
+                />
+              )}
               <Text
                 position="absolute"
                 bottom={2}
@@ -171,7 +183,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
         </SimpleGrid>
       </Box>
 
-      <Flex justify="flex-end" gap={3} mt="auto">
+      <Flex justify="space-between" w="100%" mt="auto">
         <StageButton variantType="outline" onClick={handleBackPage}>
           Back
         </StageButton>

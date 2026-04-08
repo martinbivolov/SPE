@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, IconButton } from "@chakra-ui/react";
 import { FiVolume2, FiVolumeX } from "react-icons/fi";
+import { useVolume } from "../../contexts/VolumeContext";
 
 interface VideoPlayerProps {
   src: string | null;
@@ -19,6 +20,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [progressPct, setProgressPct] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [showPlayFallback, setShowPlayFallback] = useState(false);
+  const { volume } = useVolume();
+
+  // Apply global volume to the video element
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.volume = volume;
+    }
+  }, [volume]);
 
   useEffect(() => {
     const video = videoRef.current;
