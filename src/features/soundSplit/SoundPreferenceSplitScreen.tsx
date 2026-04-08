@@ -76,7 +76,9 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					id: `a-${obj.id}`,
 					label: obj.label,
 					imageUrl: obj.image_url,
-					sfxUrl: obj.sfx_url,
+					sfxUrl: obj.sfx_url_a ?? obj.sfx_url,
+					sfxUrlA: obj.sfx_url_a,
+					sfxUrlB: obj.sfx_url_b,
 					x: obj.x,
 					y: obj.y,
 					size: obj.size,
@@ -100,7 +102,9 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					id: `b-${obj.id}`,
 					label: obj.label,
 					imageUrl: obj.image_url,
-					sfxUrl: obj.sfx_url,
+					sfxUrl: obj.sfx_url_b ?? obj.sfx_url,
+					sfxUrlA: obj.sfx_url_a,
+					sfxUrlB: obj.sfx_url_b,
 					x: obj.x,
 					y: obj.y,
 					size: obj.size,
@@ -464,7 +468,9 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				borderRadius="lg"
 				overflow="hidden"
 				bg="black"
-				h="calc(100vh - 280px)"
+				aspectRatio="3/2"
+				maxH="calc(100vh - 280px)"
+				w="100%"
 				mb={6}
 			>
 				{/* Scene split view — interactive phases only */}

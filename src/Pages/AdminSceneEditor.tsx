@@ -40,13 +40,17 @@ export default function AdminSceneEditor() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  // One ref per panel — mouse delta is measured relative to whichever canvas the drag started on
+  const leftCanvasRef = useRef<HTMLDivElement>(null);
+  const rightCanvasRef = useRef<HTMLDivElement>(null);
+
   const dragRef = useRef<{
     id: string;
     startClientX: number;
     startClientY: number;
     origX: number;
     origY: number;
+    canvasRef: React.RefObject<HTMLDivElement | null>;
   } | null>(null);
 
   // ── Fetch all scene versions with nested scene name + objects ──────────────
@@ -60,7 +64,7 @@ export default function AdminSceneEditor() {
       if (error) {
         setFetchError(error.message);
       } else {
-        setVersions((data ?? []) as Version[]);
+        setVersions((data ?? []) as unknown as Version[]);
       }
       setLoading(false);
     }
@@ -84,7 +88,7 @@ export default function AdminSceneEditor() {
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent, id: string) => {
+    (e: React.MouseEvent, id: string, canvasRef: React.RefObject<HTMLDivElement | null>) => {
       e.preventDefault();
       e.stopPropagation();
       setSelectedObjId(id);
@@ -96,6 +100,7 @@ export default function AdminSceneEditor() {
         startClientY: e.clientY,
         origX: obj.x,
         origY: obj.y,
+        canvasRef,
       };
     },
     [objects]
@@ -103,8 +108,8 @@ export default function AdminSceneEditor() {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const drag = dragRef.current;
-    if (!drag || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!drag || !drag.canvasRef.current) return;
+    const rect = drag.canvasRef.current.getBoundingClientRect();
     const dxPct = ((e.clientX - drag.startClientX) / rect.width) * 100;
     const dyPct = ((e.clientY - drag.startClientY) / rect.height) * 100;
     const newX = Math.round(Math.max(0, Math.min(100, drag.origX + dxPct)));
@@ -189,29 +194,73 @@ export default function AdminSceneEditor() {
     previewWrap: {
       flex: 1,
       display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
       background: '#0a0a14',
-      padding: '32px 32px 0 32px',
+      padding: '24px 32px 0 32px',
       overflow: 'hidden',
+      gap: 8,
+    },
+    hint: {
+      color: '#6b6ba0',
+      fontSize: 11,
+      alignSelf: 'flex-start' as const,
+      flexShrink: 0,
     },
     placeholder: {
       color: '#3d3d60',
       fontSize: 16,
       userSelect: 'none' as const,
+      marginTop: 'auto',
+      marginBottom: 'auto',
     },
-    canvas: {
-      position: 'relative' as const,
-      width: 'calc(100vw - 180px - 64px - 264px)',
+    // Outer row — matches the live scene container (3:2) and owns the mouse events
+    canvasRow: {
+      display: 'flex',
+      flexDirection: 'row' as const,
+      width: '100%',
       maxWidth: '1216px',
-      height: 'calc(100vh - 280px)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
+      aspectRatio: '3 / 2',
+      maxHeight: 'calc(100vh - 280px)',
       borderRadius: 8,
       overflow: 'hidden',
-      cursor: 'crosshair',
-      userSelect: 'none' as const,
       boxShadow: '0 0 0 1px #2d2d50, 0 8px 32px rgba(0,0,0,0.6)',
+      userSelect: 'none' as const,
+      cursor: 'crosshair',
+      flexShrink: 0,
+    },
+    // Each half-panel — same shape as a live split panel
+    canvas: {
+      position: 'relative' as const,
+      flex: 1,
+      height: '100%',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      overflow: 'hidden',
+    },
+    // Thin purple line matching the live app's Splitter.ResizeTrigger
+    splitDivider: {
+      width: 2,
+      background: '#7c3aed',
+      flexShrink: 0,
+      zIndex: 10,
+    },
+    // Small panel label in the top-left corner of each canvas
+    panelTag: {
+      position: 'absolute' as const,
+      top: 6,
+      left: 8,
+      fontSize: 9,
+      fontWeight: 700,
+      color: '#a78bfa',
+      background: 'rgba(13,13,26,0.75)',
+      padding: '2px 6px',
+      borderRadius: 4,
+      letterSpacing: 0.8,
+      pointerEvents: 'none' as const,
+      zIndex: 10,
+      textTransform: 'uppercase' as const,
     },
     objBox: (selected: boolean) => ({
       position: 'absolute' as const,
@@ -241,6 +290,14 @@ export default function AdminSceneEditor() {
       padding: '1px 2px',
       background: 'rgba(0,0,0,0.45)',
       lineHeight: 1.3,
+    },
+    gridOverlay: {
+      position: 'absolute' as const,
+      inset: 0,
+      pointerEvents: 'none' as const,
+      backgroundImage:
+        'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+      backgroundSize: '10% 10%',
     },
     panel: {
       width: 264,
@@ -330,6 +387,43 @@ export default function AdminSceneEditor() {
     }),
   };
 
+  const bgImage = selectedVersion?.background_image_url
+    ? `url(${selectedVersion.background_image_url})`
+    : undefined;
+
+  const renderObjects = (side: 'left' | 'right', canvasRef: React.RefObject<HTMLDivElement | null>) =>
+    objects
+      .filter(o => (side === 'left' ? o.x <= 50 : o.x > 50))
+      .map(obj => (
+        <div
+          key={obj.id}
+          onMouseDown={e => handleMouseDown(e, obj.id, canvasRef)}
+          style={{
+            ...s.objBox(selectedObjId === obj.id),
+            left: `${obj.x}%`,
+            top: `${obj.y}%`,
+            width: `${obj.size}%`,
+            height: `${obj.size}%`,
+          }}
+        >
+          {obj.image_url && (
+            <img
+              src={obj.image_url}
+              alt={obj.label}
+              draggable={false}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            />
+          )}
+          <div style={s.objLabel}>{obj.label}</div>
+        </div>
+      ));
+
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -373,72 +467,61 @@ export default function AdminSceneEditor() {
 
       {/* ── Body ── */}
       <div style={s.body}>
-        {/* Preview canvas */}
+        {/* Preview */}
         <div style={s.previewWrap}>
           {!selectedVersionId ? (
             <span style={s.placeholder}>Select a scene version to begin</span>
           ) : (
-            <div
-              ref={containerRef}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleDragEnd}
-              onMouseLeave={handleDragEnd}
-              style={{
-                ...s.canvas,
-                backgroundImage: selectedVersion?.background_image_url
-                  ? `url(${selectedVersion.background_image_url})`
-                  : undefined,
-                background: selectedVersion?.background_image_url ? undefined : '#1a1a30',
-              }}
-            >
-              {objects.map(obj => (
+            <>
+              <span style={s.hint}>
+                Split preview — Panel A shows objects with x ≤ 50, Panel B shows x &gt; 50.
+                Drag objects to reposition. Coordinates are % of each panel.
+              </span>
+
+              {/* Mouse events on the row so dragging past a panel edge still tracks */}
+              <div
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                style={s.canvasRow}
+              >
+                {/* ── Panel A (left) ── */}
                 <div
-                  key={obj.id}
-                  onMouseDown={e => handleMouseDown(e, obj.id)}
+                  ref={leftCanvasRef}
                   style={{
-                    ...s.objBox(selectedObjId === obj.id),
-                    left: `${obj.x}%`,
-                    top: `${obj.y}%`,
-                    width: `${obj.size}%`,
-                    height: `${obj.size}%`,
+                    ...s.canvas,
+                    backgroundImage: bgImage,
+                    background: bgImage ? undefined : '#1a1a30',
                   }}
                 >
-                  {obj.image_url && (
-                    <img
-                      src={obj.image_url}
-                      alt={obj.label}
-                      draggable={false}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        pointerEvents: 'none',
-                        userSelect: 'none',
-                      }}
-                    />
-                  )}
-                  <div style={s.objLabel}>{obj.label}</div>
+                  <div style={s.panelTag}>A · x ≤ 50</div>
+                  {renderObjects('left', leftCanvasRef)}
+                  <div style={s.gridOverlay} />
                 </div>
-              ))}
 
-              {/* Grid overlay hint */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  pointerEvents: 'none',
-                  backgroundImage:
-                    'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-                  backgroundSize: '10% 10%',
-                }}
-              />
-            </div>
+                {/* ── Divider (matches live app purple ResizeTrigger) ── */}
+                <div style={s.splitDivider} />
+
+                {/* ── Panel B (right) ── */}
+                <div
+                  ref={rightCanvasRef}
+                  style={{
+                    ...s.canvas,
+                    backgroundImage: bgImage,
+                    background: bgImage ? undefined : '#1a1a30',
+                  }}
+                >
+                  <div style={s.panelTag}>B · x &gt; 50</div>
+                  {renderObjects('right', rightCanvasRef)}
+                  <div style={s.gridOverlay} />
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Side panel */}
+        {/* ── Side panel ── */}
         <div style={s.panel}>
-          {/* Properties */}
           <div style={s.sectionTitle}>Properties</div>
 
           {selectedObj ? (
@@ -461,7 +544,7 @@ export default function AdminSceneEditor() {
                       ? 'X  (0 – 100%)'
                       : field === 'y'
                       ? 'Y  (0 – 100%)'
-                      : 'Size  (% of canvas)'}
+                      : 'Size  (% of panel)'}
                   </label>
                   <input
                     type="number"

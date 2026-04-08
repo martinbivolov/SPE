@@ -15,18 +15,21 @@ interface ClickableElementProps {
 
 const attentionWiggle = keyframes`
   0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-  20% { transform: translate(-50%, -50%) rotate(-2deg) scale(1.02); }
-  40% { transform: translate(-50%, -50%) rotate(2deg) scale(1.04); }
-  60% { transform: translate(-50%, -50%) rotate(-1deg) scale(1.03); }
-  80% { transform: translate(-50%, -50%) rotate(1deg) scale(1.01); }
+  25% { transform: translate(-50%, -50%) rotate(-1deg) scale(1.04); }
+  75% { transform: translate(-50%, -50%) rotate(1deg) scale(1.04); }
 `;
 
 const shake = keyframes`
-  0% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(-1px, 1px) rotate(-1deg); }
-  50% { transform: translate(1px, -1px) rotate(1deg); }
-  75% { transform: translate(-1px, 0px) rotate(0deg); }
-  100% { transform: translate(1px, 1px) rotate(1deg); }
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  20% { transform: translate(-51%, -49%) rotate(-0.5deg); }
+  40% { transform: translate(-49%, -51%) rotate(0.5deg); }
+  60% { transform: translate(-51%, -50%) rotate(-0.5deg); }
+  80% { transform: translate(-49%, -50%) rotate(0.5deg); }
+`;
+
+const glowPulse = keyframes`
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(167, 139, 250, 0)); }
+  50% { filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8)); }
 `;
 
 const ClickableElement: React.FC<ClickableElementProps> = ({
@@ -39,6 +42,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
   elementRef,
 }) => {
   const [isHeld, setIsHeld] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const isEnabled = useMemo(() => {
     if (sceneSide === "A") {
@@ -54,6 +58,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
     }
 
     setIsHeld(true);
+    setIsPressed(true);
     onHoldChange(element.id, true);
   };
 
@@ -63,6 +68,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
     }
 
     setIsHeld(false);
+    setIsPressed(false);
     onHoldChange(element.id, false);
   };
 
@@ -72,7 +78,7 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
       position="absolute"
       left={`${element.x}%`}
       top={`${element.y}%`}
-      transform="translate(-50%, -50%)"
+      transform={`translate(-50%, -50%) scale(${isPressed ? 0.92 : 1})`}
       w={`${element.size}%`}
       h={`${element.size}%`}
       zIndex={5}
@@ -81,6 +87,8 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
       pointerEvents={isEnabled && isInteractive ? "auto" : "none"}
       userSelect="none"
       touchAction="none"
+      transition="transform 0.15s ease, filter 0.15s ease"
+      filter={isHeld ? "drop-shadow(0 0 6px rgba(167, 139, 250, 1))" : undefined}
       onPointerDown={startHold}
       onPointerUp={stopHold}
       onPointerLeave={stopHold}
@@ -89,8 +97,10 @@ const ClickableElement: React.FC<ClickableElementProps> = ({
         isHeld
           ? `${shake} 0.28s linear infinite`
           : shouldWiggle
-            ? `${attentionWiggle} 0.9s ease-in-out infinite`
-            : "none"
+            ? `${attentionWiggle} 1.4s ease-in-out infinite`
+            : isEnabled && isInteractive
+              ? `${glowPulse} 2s ease-in-out infinite`
+              : "none"
       }
     >
       <Image

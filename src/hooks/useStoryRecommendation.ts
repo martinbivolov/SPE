@@ -128,7 +128,7 @@ export const useStoryRecommendation = (
             scene_versions (
               id, video_a_url, video_b_url, background_image_url,
               interactive_enabled, active,
-              scene_objects ( id, label, image_url, sfx_url, x, y, size )
+              scene_objects ( id, label, image_url, sfx_url, sfx_url_a, sfx_url_b, x, y, size )
             )
           `)
           .eq('story_id', storyId)

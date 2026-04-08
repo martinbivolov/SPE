@@ -62,6 +62,8 @@ export interface SceneObject {
   label: string;
   image_url: string;
   sfx_url: string;
+  sfx_url_a: string | null;
+  sfx_url_b: string | null;
   x: number;
   y: number;
   size: number;

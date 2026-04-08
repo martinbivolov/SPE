@@ -20,6 +20,8 @@ export interface SceneElement {
   label: string;
   imageUrl: string;
   sfxUrl: string;
+  sfxUrlA?: string | null;
+  sfxUrlB?: string | null;
   x: number;
   y: number;
   size: number;
