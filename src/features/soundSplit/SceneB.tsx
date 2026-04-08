@@ -10,7 +10,6 @@ interface SceneBProps {
   isAnimating?: boolean;
   animationDurationMs?: number;
   shouldWiggleObjects?: boolean;
-  showOverlay?: boolean;
   onHoldChange: (id: string, isHeld: boolean) => void;
 }
 
@@ -21,7 +20,6 @@ const SceneB: React.FC<SceneBProps> = ({
   isAnimating = false,
   animationDurationMs = 1200,
   shouldWiggleObjects = false,
-  showOverlay = true,
   onHoldChange,
 }) => {
   console.log('[sceneB] elements received:', scene.elements);
@@ -35,8 +33,6 @@ const SceneB: React.FC<SceneBProps> = ({
       transition={isAnimating ? `clip-path ${animationDurationMs}ms ease-in-out` : "clip-path 0.05s linear"}
     >
       <Image src={scene.backgroundImageUrl} alt={scene.name} w="100%" h="100%" objectFit="cover" />
-
-      {showOverlay && <Box position="absolute" inset={0} zIndex={2} bg="rgba(0, 0, 0, 0.45)" pointerEvents="none" />}
 
       {scene.elements.map((element) => (
         <ClickableElement

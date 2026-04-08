@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Circle, Flex, HStack, IconButton, Text } from '@chakra-ui/react';
+import { Box, Circle, Flex, HStack, IconButton, Splitter, Text } from '@chakra-ui/react';
 import { FiInfo } from 'react-icons/fi';
 import SceneA from './SceneA';
 import SceneB from './SceneB';
@@ -469,27 +469,84 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			>
 				{/* Scene split view — interactive phases only */}
 				{!isPlayerActive && (
-					<>
-						<SceneA
-							scene={sceneA}
-							dividerX={dividerX}
-							isInteractive={canInteractWithScene}
-							shouldWiggleObjects={wiggleObjects}
-							onHoldChange={handleHoldChange}
-							tutorialObjectId={sceneA.elements[0]?.id}
-							tutorialObjectRef={objectRef}
-						/>
-						<SceneB
-							scene={sceneB}
-							dividerX={dividerX}
-							isInteractive={canInteractWithScene}
-							isAnimating={isDividerAnimating}
-							animationDurationMs={dividerAnimationMs}
-							showOverlay={false}
-							shouldWiggleObjects={wiggleObjects}
-							onHoldChange={handleHoldChange}
-						/>
-					</>
+					sessionPhase === 'exploration' || sessionPhase === 'post-preference' || sessionPhase === 'post-strength' ? (
+						<Splitter.Root
+							panels={[
+								{ id: 'a', minSize: 20 },
+								{ id: 'b', minSize: 20 },
+							]}
+							defaultSize={[50, 50]}
+							h="100%"
+							w="100%"
+							position="absolute"
+							inset={0}
+						>
+							<Splitter.Panel id="a" overflow="hidden" position="relative">
+								<SceneA
+									scene={sceneA}
+									dividerX={100}
+									isInteractive={canInteractWithScene}
+									shouldWiggleObjects={wiggleObjects}
+									onHoldChange={handleHoldChange}
+									tutorialObjectId={sceneA.elements[0]?.id}
+									tutorialObjectRef={objectRef}
+								/>
+							</Splitter.Panel>
+
+							<Splitter.ResizeTrigger
+								id="a:b"
+								background="purple.500"
+								w="2px"
+								position="relative"
+								_hover={{ background: 'purple.300' }}
+							/>
+
+							<Splitter.Panel id="b" overflow="hidden" position="relative">
+								<SceneB
+									scene={sceneB}
+									dividerX={0}
+									isInteractive={canInteractWithScene}
+									isAnimating={false}
+									animationDurationMs={0}
+		
+									shouldWiggleObjects={wiggleObjects}
+									onHoldChange={handleHoldChange}
+								/>
+							</Splitter.Panel>
+						</Splitter.Root>
+					) : (
+						<>
+							<SceneA
+								scene={sceneA}
+								dividerX={dividerX}
+								isInteractive={canInteractWithScene}
+								shouldWiggleObjects={wiggleObjects}
+								onHoldChange={handleHoldChange}
+								tutorialObjectId={sceneA.elements[0]?.id}
+								tutorialObjectRef={objectRef}
+							/>
+							<SceneB
+								scene={sceneB}
+								dividerX={dividerX}
+								isInteractive={canInteractWithScene}
+								isAnimating={isDividerAnimating}
+								animationDurationMs={dividerAnimationMs}
+	
+								shouldWiggleObjects={wiggleObjects}
+								onHoldChange={handleHoldChange}
+							/>
+							{!isNarrationPhase && (
+								<DividerControl
+									dividerX={dividerX}
+									isInteractive={!isPlayerActive && !isTutorialActive && isInteractivePhase}
+									isAnimating={isDividerAnimating}
+									animationDurationMs={dividerAnimationMs}
+									onDividerChange={setDividerX}
+									dividerRef={dividerRef}
+								/>
+							)}
+						</>
+					)
 				)}
 
 				{/* Single VideoPlayer handles narration audio + scene videos + filler.
@@ -544,17 +601,6 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 							Starting in a moment...
 						</Text>
 					</Flex>
-				)}
-
-				{!isNarrationPhase && (
-					<DividerControl
-						dividerX={dividerX}
-						isInteractive={!isPlayerActive && !isTutorialActive && isInteractivePhase}
-						isAnimating={isDividerAnimating}
-						animationDurationMs={dividerAnimationMs}
-						onDividerChange={setDividerX}
-						dividerRef={dividerRef}
-					/>
 				)}
 
 				{isVideoPhase && (
