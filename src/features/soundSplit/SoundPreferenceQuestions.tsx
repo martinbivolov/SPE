@@ -191,7 +191,8 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         flex="1"
         overflowY="auto"
         mb={8}
-        p={{ base: 4, md: 6 }}
+        py={{ base: 4, md: 6 }}
+        pr={{ base: 4, md: 6 }}
         css={{
           '&::-webkit-scrollbar': { width: '10px' },
           '&::-webkit-scrollbar-track': { background: 'transparent' },
@@ -224,6 +225,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                     bg="white"
                     _dark={{ bg: 'gray.700' }}
                     disabled={!enabled}
+                    pl={3}
                   />
                 ) : (
                   <NativeSelect.Root>
@@ -232,6 +234,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                       onChange={(e) => handleSelect(question.id, e.target.value)}
                       bg="white"
                       _dark={{ bg: 'gray.700' }}
+                      pl={3}
                     >
                       <option value="" disabled>
                         Select an option
@@ -251,7 +254,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         )}
       </Box>
 
-      <Flex justify="flex-end" gap={3}>
+      <Flex justify="space-between" w="100%">
         <StageButton variantType="outline" onClick={handleBackGroup}>
           Back
         </StageButton>

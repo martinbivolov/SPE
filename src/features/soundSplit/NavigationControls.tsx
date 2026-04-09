@@ -9,7 +9,7 @@ interface NavigationControlsProps {
 
 const NavigationControls: React.FC<NavigationControlsProps> = ({ onBack, onNext }) => {
   return (
-    <Flex justify="flex-end" gap={3}>
+    <Flex justify="space-between" w="100%">
       <StageButton variantType="outline" onClick={onBack}>
         Back
       </StageButton>

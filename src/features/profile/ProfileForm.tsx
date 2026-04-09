@@ -90,7 +90,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onNext }) => {
         </Box>
       </Stack>
 
-      <Flex justify="flex-end" mt={6} gap={3}>
+      <Flex justify="space-between" w="100%" mt={6}>
         <StageButton variantType="outline">
           Back
         </StageButton>

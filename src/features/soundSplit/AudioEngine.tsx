@@ -1,16 +1,27 @@
 import { useEffect, useRef } from "react";
 import type { SceneData } from "./types";
+import { useVolume } from "../../contexts/VolumeContext";
 
 interface AudioEngineProps {
   scenes: SceneData[];
   activeElements: string[];
 }
 
+const SFX_SCALE = 0.3;
+
 const AudioEngine: React.FC<AudioEngineProps> = ({
   scenes,
   activeElements,
 }) => {
   const sfxMapRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const { volume } = useVolume();
+
+  // Keep all active audio elements in sync with the global volume
+  useEffect(() => {
+    sfxMapRef.current.forEach((audio) => {
+      audio.volume = volume * SFX_SCALE;
+    });
+  }, [volume]);
 
   useEffect(() => {
     const sfxByElement = new Map<string, string>();
@@ -34,7 +45,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
 
       const audio = new Audio(sfxUrl);
       audio.loop = true;
-      audio.volume = 0.3;
+      audio.volume = volume * SFX_SCALE;
       void audio.play().catch((error) => {
         console.error("SFX playback blocked", error);
       });

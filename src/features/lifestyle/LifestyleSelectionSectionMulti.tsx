@@ -182,7 +182,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
         )}
       </Box>
 
-      <Flex justify="flex-end" gap={3}>
+      <Flex justify="space-between" w="100%">
         <StageButton variantType="outline" onClick={handleBackGroup}>
           Back
         </StageButton>
