@@ -13,7 +13,7 @@ interface DigitalTwinProps {
 
 const DigitalTwin: React.FC<DigitalTwinProps> = ({ userId, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const profile = useProfile(userId);
+  const { profile, loading: profileLoading } = useProfile(userId);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -28,7 +28,7 @@ const DigitalTwin: React.FC<DigitalTwinProps> = ({ userId, onSignOut }) => {
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
+        <Header title="Your Digital Twin" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profileLoading ? undefined : profile?.name ?? undefined} userEmail={profileLoading ? undefined : profile?.email ?? undefined} />
         <Box
           flex="1"
           p={{ base: 3, md: 0 }}

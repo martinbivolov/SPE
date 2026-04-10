@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { SceneObject } from '../types/supabase.types';
 
@@ -43,20 +43,21 @@ interface UseStoryRecommendationResult {
 // ---------------------------------------------------------------------------
 
 export const useStoryRecommendation = (
-  _userId?: string | null,
+  userId?: string | null,
   language: string = 'en',
 ): UseStoryRecommendationResult => {
   const [data, setData] = useState<LoadedStory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasFetched = useRef(false);
 
   useEffect(() => {
-    // Prevent double-fetch within a single mount lifecycle.
-    // Reset in cleanup so StrictMode's simulated unmount/remount can
-    // re-run the fetch with fresh state rather than being permanently blocked.
-    if (hasFetched.current) return;
-    hasFetched.current = true;
+    // Gate: do not fetch until the caller has a resolved userId.
+    // SoundPreference passes null while profileLoading is true so we wait
+    // for the real language before making any DB requests.
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     console.log('[story] language:', language);
 
@@ -224,6 +225,9 @@ export const useStoryRecommendation = (
           narration_url: storyNarrationUrl,
           scenes,
         };
+        console.log('[story] first scene narration_url:', scenes[0]?.narration_url);
+        console.log('[story] first scene narration_url_da from raw:', (rawScenes as any)?.[0]?.narration_url_da);
+        console.log('[story] language used:', language);
         setData(result);
         setError(null);
       } catch (err) {
@@ -235,19 +239,14 @@ export const useStoryRecommendation = (
         setError(message);
       } finally {
         // Always reset loading — even if unmounted mid-fetch.
-        // Without this, StrictMode's unmount/remount leaves loading=true forever
-        // because hasFetched prevents the remounted instance from re-fetching.
         setLoading(false);
       }
     };
 
     void fetchStory();
 
-    return () => {
-      // Reset so a language change triggers a fresh fetch.
-      hasFetched.current = false;
-    };
-  }, [language]); // re-run when language changes; user resolved inside via supabase.auth.getUser()
+    return () => {};
+  }, [userId, language]); // re-run when userId (null → real) or language changes
 
   return { data, loading, error };
 };

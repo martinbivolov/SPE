@@ -16,8 +16,12 @@ interface SoundPreferenceProps {
 
 const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const profile = useProfile(userId);
-  const { data: story, loading, error } = useStoryRecommendation(userId, profile?.language ?? 'en');
+  const { profile, loading: profileLoading } = useProfile(userId);
+  const { data: story, loading: storyLoading, error } = useStoryRecommendation(
+    profileLoading ? null : userId,
+    profile?.language ?? 'en',
+  );
+  const loading = profileLoading || storyLoading;
 const toggleSidebar = () => setSidebarOpen((v) => !v);
   const handleNext = () => onCompleted?.();
 
@@ -30,7 +34,7 @@ const toggleSidebar = () => setSidebarOpen((v) => !v);
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title="Sound Preference" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
+        <Header title="Sound Preference" onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profileLoading ? undefined : profile?.name ?? undefined} userEmail={profileLoading ? undefined : profile?.email ?? undefined} />
         <Box
           flex="1"
           p={0}

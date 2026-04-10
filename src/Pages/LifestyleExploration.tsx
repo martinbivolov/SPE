@@ -25,7 +25,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [selectedLifestyleImages, setSelectedLifestyleImages] = useState<string[]>([]);
 
-  const profile = useProfile(userId);
+  const { profile, loading: profileLoading } = useProfile(userId);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -120,7 +120,7 @@ const LifestyleExploration: React.FC<LifestyleExplorationProps> = ({ userId, onN
         onOpen={() => setSidebarOpen(true)}
       />
       <Flex direction="column" flex="1" w="100%">
-        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profile?.name} userEmail={profile?.email} />
+        <Header title={getHeaderTitle()} onMenuClick={toggleSidebar} onSignOut={onSignOut} userName={profileLoading ? undefined : profile?.name ?? undefined} userEmail={profileLoading ? undefined : profile?.email ?? undefined} />
         <Box
             flex="1"
             p={{ base: 3, md: 0 }}
