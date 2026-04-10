@@ -44,6 +44,7 @@ interface UseStoryRecommendationResult {
 
 export const useStoryRecommendation = (
   _userId?: string | null,
+  language: string = 'en',
 ): UseStoryRecommendationResult => {
   const [data, setData] = useState<LoadedStory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,8 @@ export const useStoryRecommendation = (
     // re-run the fetch with fresh state rather than being permanently blocked.
     if (hasFetched.current) return;
     hasFetched.current = true;
+
+    console.log('[story] language:', language);
 
     const fetchStory = async () => {
       setLoading(true);
@@ -79,7 +82,7 @@ export const useStoryRecommendation = (
 
         const { data: recRow, error: recError } = await supabase
           .from('story_recommendation')
-          .select('story_id, story_name, intro_narration_url')
+          .select('story_id, story_name, intro_narration_url, narration_url_da')
           .eq('user_id', user.id)
           .order('score', { ascending: false })
           .limit(1)
@@ -94,14 +97,17 @@ export const useStoryRecommendation = (
         if (recRow) {
           storyId = recRow.story_id as string;
           storyName = recRow.story_name as string;
-          storyNarrationUrl = recRow.intro_narration_url as string | null;
+          const enUrl = recRow.intro_narration_url as string | null;
+          storyNarrationUrl = language === 'da'
+            ? ((recRow.narration_url_da ?? enUrl) as string | null)
+            : enUrl;
         }
 
         // ── Step 2: Fallback — story with sort_order = 1 ────────────────────
         if (!storyId) {
           const { data: fallback, error: fallbackError } = await supabase
             .from('stories')
-            .select('id, name, narration_url')
+            .select('id, name, narration_url, narration_url_da')
             .eq('sort_order', 1)
             .limit(1)
             .maybeSingle();
@@ -117,14 +123,18 @@ export const useStoryRecommendation = (
 
           storyId = fallback.id as string;
           storyName = fallback.name as string;
-          storyNarrationUrl = fallback.narration_url as string | null;
+          storyNarrationUrl = language === 'da'
+            ? ((fallback.narration_url_da ?? fallback.narration_url) as string | null)
+            : fallback.narration_url as string | null;
         }
 
         // ── Step 3: All scenes for the story with versions + objects ─────────
         const { data: rawScenes, error: scenesError } = await supabase
           .from('scenes')
           .select(`
-            id, scene_type, name, sort_order, narration_url, filler_url,
+            id, scene_type, name, sort_order,
+            narration_url, narration_url_da,
+            filler_url, filler_url_da,
             scene_versions (
               id, video_a_url, video_b_url, background_image_url,
               interactive_enabled, active,
@@ -180,8 +190,12 @@ export const useStoryRecommendation = (
             scene_type: scene.scene_type as string,
             name: scene.name as string,
             sort_order: scene.sort_order as number,
-            narration_url: scene.narration_url as string,
-            filler_url: (scene.filler_url ?? null) as string | null,
+            narration_url: language === 'da'
+              ? ((scene.narration_url_da ?? scene.narration_url) as string)
+              : scene.narration_url as string,
+            filler_url: language === 'da'
+              ? ((scene.filler_url_da ?? scene.filler_url ?? null) as string | null)
+              : (scene.filler_url ?? null) as string | null,
             version: chosen
               ? {
                   id: chosen.id as string,
@@ -230,9 +244,10 @@ export const useStoryRecommendation = (
     void fetchStory();
 
     return () => {
-      // No cleanup needed — hasFetched.current stays true to prevent re-fetching.
+      // Reset so a language change triggers a fresh fetch.
+      hasFetched.current = false;
     };
-  }, []); // run once per mount — user resolved inside via supabase.auth.getUser()
+  }, [language]); // re-run when language changes; user resolved inside via supabase.auth.getUser()
 
   return { data, loading, error };
 };

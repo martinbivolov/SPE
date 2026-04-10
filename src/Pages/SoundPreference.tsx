@@ -16,8 +16,8 @@ interface SoundPreferenceProps {
 
 const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: story, loading, error } = useStoryRecommendation(userId);
   const profile = useProfile(userId);
+  const { data: story, loading, error } = useStoryRecommendation(userId, profile?.language ?? 'en');
 const toggleSidebar = () => setSidebarOpen((v) => !v);
   const handleNext = () => onCompleted?.();
 

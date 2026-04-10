@@ -11,6 +11,7 @@ import {
 import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveQuizAnswers } from '../../hooks/useSaveQuizAnswers';
+import { supabase } from '../../lib/supabase';
 import type { QuizAnswerEntry } from '../../hooks/useSaveQuizAnswers';
 
 interface SoundPreferenceQuestionsProps {
@@ -109,7 +110,53 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
     }
 
     const ok = await saveAnswers(userId, entries);
-    if (ok) onNext();
+
+    if (ok) {
+      // Find name question by text
+      const allQuestions = visibleGroups.flatMap(g => g.lifestyle_questions ?? []);
+
+      const nameQuestion = allQuestions.find(q =>
+        q.text?.toLowerCase().includes('name')
+      );
+      const langQuestion = allQuestions.find(q =>
+        q.text?.toLowerCase().includes('language')
+      );
+
+      const nameValue = nameQuestion
+        ? freeTexts[nameQuestion.id]?.trim()
+        : undefined;
+
+      // Language is stored as an answer_option_id UUID
+      // Look up the label from the question's answer_options
+      const langOptionId = langQuestion
+        ? selections[langQuestion.id]
+        : undefined;
+
+      const langOption = langQuestion?.answer_options?.find(
+        o => o.id === langOptionId
+      );
+
+      const languageCode = ({
+        'English': 'en',
+        'Danish': 'da',
+        'Bulgarian': 'bg',
+        'Hungarian': 'hu',
+      } as Record<string, string>)[langOption?.label ?? ''] ?? 'en';
+
+      // Build profile update object — only include defined values
+      const profileUpdate: Record<string, string> = {};
+      if (nameValue) profileUpdate.name = nameValue;
+      if (langOption) profileUpdate.preferred_language = languageCode;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', userId);
+      }
+
+      onNext();
+    }
   };
 
   const handleBackGroup = () => {
