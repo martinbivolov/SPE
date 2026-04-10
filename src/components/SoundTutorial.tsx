@@ -22,6 +22,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
 
   const animationRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const animationCompleteRef = useRef(false);
 
   const isLastStep = step === tutorialSteps.length - 1;
 
@@ -48,6 +49,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
     // start from middle -> go right -> pause -> go left -> pause -> back to middle
     if (step === 1) {
       setSizes([50, 50]);
+      animationCompleteRef.current = false;
 
       const RIGHT_TARGET = 82;
       const LEFT_TARGET = 18;
@@ -58,6 +60,14 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
 
       const startMove = (direction: 'right' | 'left' | 'center') => {
         animationRef.current = window.setInterval(() => {
+          // Stop all updates if animation is complete
+          if (animationCompleteRef.current) {
+            if (animationRef.current) {
+              window.clearInterval(animationRef.current);
+              animationRef.current = null;
+            }
+            return;
+          }
           setSizes((prev) => {
             const left = prev[0];
 
@@ -94,20 +104,22 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
             }
 
             // center
-            if (left >= CENTER_TARGET) {
-              const nextLeft = Math.max(left - STEP_SIZE, CENTER_TARGET);
-              if (nextLeft === CENTER_TARGET && animationRef.current) {
+            const distToCenter = Math.abs(left - CENTER_TARGET);
+            if (distToCenter <= STEP_SIZE) {
+              if (animationRef.current) {
                 window.clearInterval(animationRef.current);
                 animationRef.current = null;
               }
-              return [nextLeft, 100 - nextLeft];
+              animationCompleteRef.current = true;
+              // Hard snap after current render cycle completes
+              setTimeout(() => setSizes([50, 50]), 0);
+              return [CENTER_TARGET, CENTER_TARGET];
+            }
+
+            if (left > CENTER_TARGET) {
+              return [left - STEP_SIZE, 100 - (left - STEP_SIZE)];
             } else {
-              const nextLeft = Math.min(left + STEP_SIZE, CENTER_TARGET);
-              if (nextLeft === CENTER_TARGET && animationRef.current) {
-                window.clearInterval(animationRef.current);
-                animationRef.current = null;
-              }
-              return [nextLeft, 100 - nextLeft];
+              return [left + STEP_SIZE, 100 - (left + STEP_SIZE)];
             }
           });
         }, TICK_MS);
@@ -196,32 +208,23 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
 
       {phase === 'tutorial' && step < tutorialSteps.length && (
         <>
-          <Splitter.Root
-            panels={[
-              { id: 'left', minSize: 8 },
-              { id: 'right', minSize: 8 },
-            ]}
-            size={sizes}
-            onResize={(details) => {
-              if (step === 3) {
-                const next = details.size as number[];
-                if (next.length >= 2) {
-                  setSizes([next[0], next[1]]);
-                }
-              }
-            }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 1,
-            }}
+          {/* Pure CSS split — no Chakra Splitter, no internal state */}
+          <Box
+            position="absolute"
+            inset={0}
+            zIndex={1}
+            display="flex"
+            style={{ pointerEvents: 'none' }}
           >
-            <Splitter.Panel
-              id="left"
+            {/* Left panel — width driven by sizes[0] */}
+            <Box
               style={{
+                width: `${sizes[0]}%`,
                 background: '#f6f0ff',
                 position: 'relative',
                 overflow: 'hidden',
+                flexShrink: 0,
+                transition: 'width 0.04s linear',
               }}
             >
               {animateCircles && (
@@ -247,16 +250,36 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                   ))}
                 </>
               )}
-            </Splitter.Panel>
+            </Box>
 
-            <Splitter.ResizeTrigger id="left:right" disabled={step !== 3}>
-              <Splitter.ResizeTriggerSeparator />
-              <Splitter.ResizeTriggerIndicator />
-            </Splitter.ResizeTrigger>
-
-            <Splitter.Panel
-              id="right"
+            {/* Divider line — visual only */}
+            <Box
               style={{
+                width: '2px',
+                background: '#a78bfa',
+                flexShrink: 0,
+                position: 'relative',
+              }}
+            >
+              <Box
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  background: 'white',
+                  border: '2px solid #a78bfa',
+                }}
+              />
+            </Box>
+
+            {/* Right panel — takes remaining width */}
+            <Box
+              style={{
+                flex: 1,
                 background: '#d9d9d9',
                 position: 'relative',
                 overflow: 'hidden',
@@ -285,8 +308,43 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                   ))}
                 </>
               )}
-            </Splitter.Panel>
-          </Splitter.Root>
+            </Box>
+          </Box>
+
+          {/* Chakra Splitter ONLY for step 3 where user drags */}
+          {step === 3 && (
+            <Splitter.Root
+              panels={[
+                { id: 'left', minSize: 8 },
+                { id: 'right', minSize: 8 },
+              ]}
+              defaultSize={[50, 50]}
+              onResize={(details) => {
+                const next = details.size as number[];
+                if (next.length >= 2) {
+                  setSizes([next[0], next[1]]);
+                }
+              }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 2,
+              }}
+            >
+              <Splitter.Panel
+                id="left"
+                style={{ background: '#f6f0ff' }}
+              />
+              <Splitter.ResizeTrigger id="left:right">
+                <Splitter.ResizeTriggerSeparator />
+                <Splitter.ResizeTriggerIndicator />
+              </Splitter.ResizeTrigger>
+              <Splitter.Panel
+                id="right"
+                style={{ background: '#d9d9d9' }}
+              />
+            </Splitter.Root>
+          )}
 
           <Box
             style={{

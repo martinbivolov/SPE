@@ -112,7 +112,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         preload="auto"
         playsInline
         muted={isMuted}
-        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block", background: "black" }}
       />
 
       <IconButton

@@ -432,6 +432,10 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
 	const totalScenes = story.scenes.length;
 
+	const containerAspectRatio = isVideoPhase || isNarrationPhase || sessionPhase === 'between-videos'
+		? '16/9'
+		: '3/2';
+
 	return (
 		<Box
 			maxW="1280px"
@@ -439,39 +443,20 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			mx="auto"
 			bg="white"
 			_dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-			p={{ base: 4, md: 8 }}
 			border="1px solid"
 			borderColor="gray.200"
 			boxShadow="md"
 			display="flex"
 			flexDirection="column"
 		>
-			{/* Scene progress indicator */}
-			<Flex justify="center" align="center" gap={3} mb={4}>
-				<HStack gap={2}>
-					{story.scenes.map((_, idx) => (
-						<Circle
-							key={idx}
-							size="10px"
-							bg={idx <= sceneIndex ? 'purple.500' : 'gray.300'}
-							_dark={{ bg: idx <= sceneIndex ? 'purple.400' : 'gray.600' }}
-						/>
-					))}
-				</HStack>
-				<Text fontSize="sm" color="gray.500" _dark={{ color: 'gray.400' }}>
-					Scene {sceneIndex + 1} of {totalScenes}
-				</Text>
-			</Flex>
-
 			<Box
 				position="relative"
 				borderRadius="lg"
 				overflow="hidden"
 				bg="black"
-				aspectRatio="3/2"
-				maxH="calc(100vh - 280px)"
+				aspectRatio={containerAspectRatio}
+				maxH="calc(100vh - 220px)"
 				w="100%"
-				mb={6}
 			>
 				{/* Scene split view — interactive phases only */}
 				{!isPlayerActive && (
@@ -666,7 +651,25 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 			<AudioEngine scenes={scenes} activeElements={activeElements} />
 
-			<NavigationControls onBack={onBack} onNext={handleContinueFlow} />
+			{/* Progress + Navigation bar */}
+			<Box px={{ base: 4, md: 8 }} py={3}>
+				<Flex justify="center" align="center" gap={3} mb={3}>
+					<HStack gap={2}>
+						{story.scenes.map((_, idx) => (
+							<Circle
+								key={idx}
+								size="10px"
+								bg={idx <= sceneIndex ? 'purple.500' : 'gray.300'}
+								_dark={{ bg: idx <= sceneIndex ? 'purple.400' : 'gray.600' }}
+							/>
+						))}
+					</HStack>
+					<Text fontSize="sm" color="gray.500" _dark={{ color: 'gray.400' }}>
+						Scene {sceneIndex + 1} of {totalScenes}
+					</Text>
+				</Flex>
+				<NavigationControls onBack={onBack} onNext={handleContinueFlow} />
+			</Box>
 
 			<TutorialOverlay
 				isActive={isTutorialActive}
