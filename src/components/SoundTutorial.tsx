@@ -391,12 +391,14 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
               <StageButton
                 variantType="subtle"
                 onClick={() => {
-                  if (!isLastStep) {
+                  if (isLastStep) {
+                    onNext();
+                  } else {
                     setStep((prev) => prev + 1);
                   }
                 }}
               >
-                ok
+                {isLastStep ? 'Start' : 'ok'}
               </StageButton>
             </Box>
           </Box>

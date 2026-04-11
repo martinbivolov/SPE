@@ -125,13 +125,14 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const isNarrationPhase =
 		sessionPhase === 'story-intro' ||
 		sessionPhase === 'scene-narration' ||
-		sessionPhase === 'filler';
+		sessionPhase === 'filler' ||
+		sessionPhase === 'end-narration';
 	const isInteractivePhase = sessionPhase === 'replay' || sessionPhase === 'exploration';
 	const canInteractWithScene = isInteractivePhase && !isTutorialActive && objectsInteractive;
 
 	// All media (narration audio + scene videos) routes through the single VideoPlayer.
 	// This ensures handleVideoEnded can chain phases in the correct order without overlap.
-	const isPlayerActive = isVideoPhase || isNarrationPhase;
+	const isPlayerActive = isVideoPhase || isNarrationPhase || sessionPhase === 'end-narration';
 
 	const clearTimers = useCallback(() => {
 		timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
@@ -245,6 +246,17 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 	// ── Mark onboarding complete and exit ──
 	const completeSession = useCallback(async () => {
+		// Play end narration first if available
+		const endUrl = story.end_narration_url ?? null;
+		if (endUrl) {
+			setSessionPhase('end-narration');
+			setCaption('');
+			playSrc(endUrl);
+			// handleVideoEnded will mark onboarding complete and call onNext when it finishes
+			return;
+		}
+
+		// No end narration — go straight to completion
 		try {
 			await supabase
 				.from('profiles')
@@ -254,7 +266,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			console.error('Could not mark onboarding complete:', err);
 		}
 		onNext();
-	}, [userId, onNext]);
+	}, [userId, onNext, story.end_narration_url, playSrc]);
 
 	// ── Advance to the next scene, or finish the session ──
 	const advanceScene = useCallback(() => {
@@ -281,6 +293,22 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		// Filler finished → advance to next scene
 		if (sessionPhase === 'filler') {
 			advanceScene();
+			return;
+		}
+		// End narration finished → mark onboarding complete and go to completion screen
+		if (sessionPhase === 'end-narration') {
+			const finish = async () => {
+				try {
+					await supabase
+						.from('profiles')
+						.update({ onboarding_complete: true })
+						.eq('id', userId);
+				} catch (err) {
+					console.error('Could not mark onboarding complete:', err);
+				}
+				onNext();
+			};
+			void finish();
 			return;
 		}
 		// Video A finished
@@ -313,6 +341,8 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		startVideoB,
 		snapToInteractiveReplay,
 		beginWiggleWindow,
+		userId,
+		onNext,
 	]);
 
 	const handleHoldChange = (elementId: string, isHeld: boolean) => {
@@ -432,7 +462,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
 	const totalScenes = story.scenes.length;
 
-	const containerAspectRatio = isVideoPhase || isNarrationPhase || sessionPhase === 'between-videos'
+	const containerAspectRatio = isVideoPhase || isNarrationPhase || sessionPhase === 'between-videos' || sessionPhase === 'end-narration'
 		? '16/9'
 		: '3/2';
 

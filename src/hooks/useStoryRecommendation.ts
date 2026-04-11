@@ -28,8 +28,9 @@ export interface LoadedScene {
 export interface LoadedStory {
   id: string;
   name: string;
-  narration_url: string | null; // intro audio, plays once before all scenes
-  scenes: LoadedScene[];        // ordered by sort_order
+  narration_url: string | null;     // intro audio, plays once before all scenes
+  end_narration_url: string | null; // outro audio, plays after the last scene
+  scenes: LoadedScene[];            // ordered by sort_order
 }
 
 interface UseStoryRecommendationResult {
@@ -80,10 +81,11 @@ export const useStoryRecommendation = (
         let storyId: string | null = null;
         let storyName = '';
         let storyNarrationUrl: string | null = null;
+        let storyEndNarrationUrl: string | null = null;
 
         const { data: recRow, error: recError } = await supabase
           .from('story_recommendation')
-          .select('story_id, story_name, intro_narration_url, narration_url_da')
+          .select('story_id, story_name, intro_narration_url, narration_url_da, end_narration_url, end_narration_url_da')
           .eq('user_id', user.id)
           .order('score', { ascending: false })
           .limit(1)
@@ -102,13 +104,16 @@ export const useStoryRecommendation = (
           storyNarrationUrl = language === 'da'
             ? ((recRow.narration_url_da ?? enUrl) as string | null)
             : enUrl;
+          storyEndNarrationUrl = language === 'da'
+            ? ((recRow.end_narration_url_da ?? recRow.end_narration_url ?? null) as string | null)
+            : (recRow.end_narration_url ?? null) as string | null;
         }
 
         // ── Step 2: Fallback — story with sort_order = 1 ────────────────────
         if (!storyId) {
           const { data: fallback, error: fallbackError } = await supabase
             .from('stories')
-            .select('id, name, narration_url, narration_url_da')
+            .select('id, name, narration_url, narration_url_da, end_narration_url, end_narration_url_da')
             .eq('sort_order', 1)
             .limit(1)
             .maybeSingle();
@@ -127,6 +132,9 @@ export const useStoryRecommendation = (
           storyNarrationUrl = language === 'da'
             ? ((fallback.narration_url_da ?? fallback.narration_url) as string | null)
             : fallback.narration_url as string | null;
+          storyEndNarrationUrl = language === 'da'
+            ? ((fallback.end_narration_url_da ?? fallback.end_narration_url ?? null) as string | null)
+            : (fallback.end_narration_url ?? null) as string | null;
         }
 
         // ── Step 3: All scenes for the story with versions + objects ─────────
@@ -223,6 +231,7 @@ export const useStoryRecommendation = (
           id: storyId,
           name: storyName,
           narration_url: storyNarrationUrl,
+          end_narration_url: storyEndNarrationUrl,
           scenes,
         };
         console.log('[story] first scene narration_url:', scenes[0]?.narration_url);

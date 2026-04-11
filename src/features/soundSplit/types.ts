@@ -13,6 +13,7 @@ export type SessionPhase =
   | "post-preference"
   | "post-strength"
   | "filler"
+  | "end-narration"
   | "complete";
 
 export interface SceneElement {

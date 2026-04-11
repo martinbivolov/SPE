@@ -8,6 +8,7 @@ import { useAuth } from './hooks/useAuth';
 import StoryIntro from './components/StoryIntro';
 import ProfileForm from './features/profile/ProfileForm';
 import AdminSceneEditor from './Pages/AdminSceneEditor';
+import SoundExplorationCompletePage from './Pages/SoundExplorationCompletePage';
 
 function App() {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/lifestyle" />} />
         {/* <Route path="/profile" element={<ProfileForm onNext={() => navigate('/lifestyle')} />} /> */}
-        <Route path="/sound" element={<SoundPreference userId={user.id} onCompleted={() => navigate('/digital-twin')} onSignOut={() => void signOut()} />} />
+        <Route path="/sound" element={<SoundPreference userId={user.id} onCompleted={() => navigate('/sound-complete')} onSignOut={() => void signOut()} />} />
+        <Route path="/sound-complete" element={<SoundExplorationCompletePage userId={user.id} onNext={() => navigate('/digital-twin')} onSignOut={() => void signOut()} />} />
         <Route path="/lifestyle" element={<LifestyleExploration userId={user.id} onNext={() => navigate('/story-intro')} onBack={() => navigate('/sound')} onSignOut={() => void signOut()} />} />
         <Route path="/story-intro" element={<StoryIntro onComplete={() => navigate('/sound')} />} />
         <Route path="/digital-twin" element={<DigitalTwin userId={user.id} onSignOut={() => void signOut()} />} />
