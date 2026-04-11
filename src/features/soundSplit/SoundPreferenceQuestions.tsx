@@ -74,7 +74,8 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       if (!selectedOptionId) return false;
       const selectedOption = prevQuestion.answer_options?.find((o) => o.id === selectedOptionId);
       const label = selectedOption?.label?.toLowerCase() ?? '';
-      return label !== 'no' && label !== '' && !label.includes('never');
+      // Disable only if label includes 'not wearing'
+      return label !== '' && !label.includes('not wearing');
     }
 
     return true;
