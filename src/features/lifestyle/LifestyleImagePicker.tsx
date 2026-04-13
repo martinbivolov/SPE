@@ -3,6 +3,7 @@ import { Box, Flex, Image, SimpleGrid, Spinner, Text } from '@chakra-ui/react';
 import StageButton from '../../components/StageButton';
 import { useImagePickerOptions } from '../../hooks/useImagePickerOptions';
 import { useSaveImagePick } from '../../hooks/useSaveImagePick';
+import { supabase } from '../../lib/supabase';
 
 interface LifestyleImagePickerProps {
   onNext: () => void;
@@ -31,6 +32,21 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
   useEffect(() => {
     void initializeUserTagWeights(userId);
   }, [initializeUserTagWeights, userId]);
+
+  useEffect(() => {
+    const loadExistingPicks = async () => {
+      const { data: existingPicks } = await supabase
+        .from('image_picker_responses')
+        .select('chosen_id')
+        .eq('user_id', userId);
+
+      if (existingPicks && existingPicks.length > 0) {
+        onSelectionChange(existingPicks.map((p) => p.chosen_id));
+      }
+    };
+
+    void loadExistingPicks();
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggle = (id: string) => {
     const isSelected = selectedImages.includes(id);

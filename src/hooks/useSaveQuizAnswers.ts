@@ -47,42 +47,72 @@ export const useSaveQuizAnswers = (): UseSaveQuizAnswersResult => {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) throw new Error('Not authenticated. Please sign in again.');
 
-        // Partition by type. info_only entries are intentionally dropped.
-        const weightedAnswers = answers.filter(
-          (a): a is Extract<QuizAnswerEntry, { answerOptionId: string }> =>
+        // Drop info_only entries — nothing to persist.
+        const saveable = answers.filter((a) => a.questionType !== 'info_only') as Extract<
+          QuizAnswerEntry,
+          { answerOptionId: string }
+        >[];
+
+        // ── Per-row UPDATE or INSERT ─────────────────────────────────────────
+        // For each answer, check whether a row already exists for this
+        // user + question combination, then update it or insert a new one.
+        // This avoids constraint conflicts entirely and works without any
+        // unique index on the table.
+
+        for (const row of saveable) {
+          const answerOptionId = row.answerOptionId ?? null;
+          const freeTextAnswer =
+            'textValue' in row ? (row.textValue ?? null) : null;
+
+          const { data: existing } = await supabase
+            .from('lifestyle_answers')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('question_id', row.questionId)
+            .maybeSingle();
+
+          if (existing) {
+            const { error: updateError } = await supabase
+              .from('lifestyle_answers')
+              .update({
+                answer_option_id: answerOptionId,
+                free_text_answer: freeTextAnswer,
+              })
+              .eq('id', existing.id);
+
+            if (updateError) {
+              throw new Error(
+                `Could not update your answer. Please try again. (${updateError.message})`,
+              );
+            }
+          } else {
+            const { error: insertError } = await supabase
+              .from('lifestyle_answers')
+              .insert({
+                user_id: user.id,
+                question_id: row.questionId,
+                answer_option_id: answerOptionId,
+                free_text_answer: freeTextAnswer,
+              });
+
+            if (insertError) {
+              throw new Error(
+                `Could not save your answer. Please try again. (${insertError.message})`,
+              );
+            }
+          }
+        }
+
+        // ── Tag weight increments (weighted answer types only) ───────────────
+
+        const weightedAnswers = saveable.filter(
+          (a) =>
             a.questionType === 'single' ||
             a.questionType === 'multi' ||
             a.questionType === 'quotes',
         );
 
-        const freeTextAnswers = answers.filter(
-          (a): a is Extract<QuizAnswerEntry, { questionType: 'free_text' }> =>
-            a.questionType === 'free_text',
-        );
-
-        // ── Weighted answers (single / multi / quotes) ──────────────────────
-
         if (weightedAnswers.length > 0) {
-          // Step 1: Upsert one lifestyle_answers row per selected option.
-          // ignoreDuplicates: true silently skips rows that already exist.
-          const { error: insertError } = await supabase
-            .from('lifestyle_answers')
-            .upsert(
-              weightedAnswers.map((a) => ({
-                user_id: user.id,
-                question_id: a.questionId,
-                answer_option_id: a.answerOptionId,
-              })),
-              { onConflict: 'user_id,question_id,answer_option_id', ignoreDuplicates: true },
-            );
-
-          if (insertError) {
-            throw new Error(
-              `Could not save your answers. Please try again. (${insertError.message})`,
-            );
-          }
-
-          // Step 2: Look up which tags each selected option maps to.
           const { data: tagWeights, error: tagError } = await supabase
             .from('answer_option_tags')
             .select('tag_id, weight')
@@ -97,7 +127,6 @@ export const useSaveQuizAnswers = (): UseSaveQuizAnswersResult => {
             );
           }
 
-          // Step 3: Increment the user's tag weight for every matched tag.
           const rpcResults = await Promise.all(
             (tagWeights ?? []).map(({ tag_id, weight }) =>
               supabase.rpc('increment_user_tag', {
@@ -112,42 +141,6 @@ export const useSaveQuizAnswers = (): UseSaveQuizAnswersResult => {
           if (rpcFailure?.error) {
             throw new Error(
               `Could not update your preference profile. Please try again. (${rpcFailure.error.message})`,
-            );
-          }
-        }
-
-        // ── Free-text answers ───────────────────────────────────────────────
-        // Delete any existing free-text row for this user+question+option,
-        // then insert the new value with both answer_option_id and free_text_answer.
-
-        if (freeTextAnswers.length > 0) {
-          const { error: deleteError } = await supabase
-            .from('lifestyle_answers')
-            .delete()
-            .eq('user_id', user.id)
-            .in('question_id', freeTextAnswers.map((a) => a.questionId))
-            .in('answer_option_id', freeTextAnswers.map((a) => a.answerOptionId));
-
-          if (deleteError) {
-            throw new Error(
-              `Could not update your answers. Please try again. (${deleteError.message})`,
-            );
-          }
-
-          const { error: insertError } = await supabase
-            .from('lifestyle_answers')
-            .insert(
-              freeTextAnswers.map((a) => ({
-                user_id: user.id,
-                question_id: a.questionId,
-                answer_option_id: a.answerOptionId,
-                free_text_answer: a.textValue,
-              })),
-            );
-
-          if (insertError) {
-            throw new Error(
-              `Could not save your answers. Please try again. (${insertError.message})`,
             );
           }
         }

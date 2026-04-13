@@ -39,23 +39,47 @@ export const useSaveLifestyleAnswers = (): UseSaveLifestyleAnswersResult => {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) throw new Error('Not authenticated. Please sign in again.');
 
-        // Step 1: Upsert one row per selected answer option.
-        // ignoreDuplicates: true silently skips rows that already exist.
-        const { error: insertError } = await supabase
-          .from('lifestyle_answers')
-          .upsert(
-            answers.map((entry) => ({
-              user_id: user.id,
-              question_id: entry.questionId,
-              answer_option_id: entry.answerOptionId,
-            })),
-            { onConflict: 'user_id,question_id,answer_option_id', ignoreDuplicates: true },
-          );
+        // Step 1: For each question, delete all existing answers then insert
+        // the fresh set. This handles multi-select correctly: a user can have
+        // multiple rows per question (one per selected option), so checking by
+        // (user_id, question_id, answer_option_id) would miss deselected options.
+        // DELETE then INSERT is the safe pattern when the selection count can change.
 
-        if (insertError) {
-          throw new Error(
-            `Could not save your selections. Please try again. (${insertError.message})`,
-          );
+        const questionIds = [...new Set(answers.map((a) => a.questionId))];
+        console.log('[save] deleting for questions:', questionIds);
+        console.log('[save] inserting entries:', answers.length);
+
+        for (const questionId of questionIds) {
+          const { error: deleteError } = await supabase
+            .from('lifestyle_answers')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('question_id', questionId);
+
+          if (deleteError) {
+            throw new Error(
+              `Could not update your selections. Please try again. (${deleteError.message})`,
+            );
+          }
+
+          const optionsForQuestion = answers
+            .filter((a) => a.questionId === questionId)
+            .map((a) => ({
+              user_id: user.id,
+              question_id: questionId,
+              answer_option_id: a.answerOptionId,
+              free_text_answer: null,
+            }));
+
+          const { error: insertError } = await supabase
+            .from('lifestyle_answers')
+            .insert(optionsForQuestion);
+
+          if (insertError) {
+            throw new Error(
+              `Could not save your selections. Please try again. (${insertError.message})`,
+            );
+          }
         }
 
         // Step 2: Look up which tags each answer option maps to.

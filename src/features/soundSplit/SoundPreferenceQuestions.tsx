@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Flex,
@@ -31,6 +31,70 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [freeTexts, setFreeTexts] = useState<Record<string, string>>({});
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  // Stays false until the profile load resolves — prevents the step-save
+  // useEffect from writing quiz_step: 0 before the real value is read.
+  const [quizStepLoaded, setQuizStepLoaded] = useState(false);
+
+  // Step 2 — load existing answers and saved step index on mount
+  useEffect(() => {
+    const loadExistingAnswers = async () => {
+      const [profileRes, answersRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('quiz_step')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('lifestyle_answers')
+          .select('question_id, answer_option_id, free_text_answer')
+          .eq('user_id', userId),
+      ]);
+
+      const profileData = profileRes.data;
+      const existingAnswers = answersRes.data;
+
+      console.log('[quiz] loaded quiz_step:', profileData?.quiz_step);
+      console.log('[quiz] setting group index to:', profileData?.quiz_step ?? 0);
+
+      if (profileData?.quiz_step) {
+        setCurrentGroupIndex(profileData.quiz_step);
+      }
+
+      // Mark step as loaded — the save useEffect can now safely fire.
+      setQuizStepLoaded(true);
+
+      if (!existingAnswers || existingAnswers.length === 0) return;
+
+      const newFreeTexts: Record<string, string> = {};
+      const newSelections: Record<string, string> = {};
+
+      for (const answer of existingAnswers) {
+        if (answer.free_text_answer) {
+          newFreeTexts[answer.question_id] = answer.free_text_answer;
+        }
+        if (answer.answer_option_id) {
+          newSelections[answer.question_id] = answer.answer_option_id;
+        }
+      }
+
+      setFreeTexts((prev) => ({ ...prev, ...newFreeTexts }));
+      setSelections((prev) => ({ ...prev, ...newSelections }));
+    };
+
+    void loadExistingAnswers();
+  }, [userId]);
+
+  // Step 3 — persist current step index whenever it advances.
+  // The quizStepLoaded guard prevents writing 0 back to the DB on mount
+  // before the real saved value has been read from profiles.
+  useEffect(() => {
+    if (!userId || !quizStepLoaded) return;
+    supabase
+      .from('profiles')
+      .update({ quiz_step: currentGroupIndex })
+      .eq('id', userId)
+      .then(() => {});
+  }, [currentGroupIndex, userId, quizStepLoaded]);
 
   const visibleGroups = useMemo(
     () =>
@@ -109,52 +173,53 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       }
     }
 
-    const ok = await saveAnswers(userId, entries);
+    // Resolve name and language before firing parallel requests
+    const allQuestions = visibleGroups.flatMap(g => g.lifestyle_questions ?? []);
+
+    const nameQuestion = allQuestions.find(q =>
+      q.text?.toLowerCase().includes('name')
+    );
+    const langQuestion = allQuestions.find(q =>
+      q.text?.toLowerCase().includes('language')
+    );
+
+    const nameValue = nameQuestion
+      ? freeTexts[nameQuestion.id]?.trim()
+      : undefined;
+
+    const langOptionId = langQuestion
+      ? selections[langQuestion.id]
+      : undefined;
+
+    const langOption = langQuestion?.answer_options?.find(
+      o => o.id === langOptionId
+    );
+
+    const languageCode = ({
+      'English': 'en',
+      'Danish': 'da',
+      'Bulgarian': 'bg',
+      'Hungarian': 'hu',
+    } as Record<string, string>)[langOption?.label ?? ''] ?? 'en';
+
+    // Build profile update object — only include defined values.
+    // quiz_step is intentionally NOT reset here: it stays at the last group
+    // index so Back from the next section returns to the correct group.
+    // The full reset (quiz_step: 0, quiz_section: 0) only happens in
+    // LifestyleExploration when currentStep === 6 (final completion).
+    const profileUpdate: Record<string, string> = {};
+    if (nameValue) profileUpdate.name = nameValue;
+    if (langOption) profileUpdate.preferred_language = languageCode;
+
+    const [ok] = await Promise.all([
+      saveAnswers(userId, entries),
+      Object.keys(profileUpdate).length > 0
+        ? supabase.from('profiles').update(profileUpdate).eq('id', userId)
+        : Promise.resolve(null),
+    ]);
 
     if (ok) {
-      // Find name question by text
-      const allQuestions = visibleGroups.flatMap(g => g.lifestyle_questions ?? []);
-
-      const nameQuestion = allQuestions.find(q =>
-        q.text?.toLowerCase().includes('name')
-      );
-      const langQuestion = allQuestions.find(q =>
-        q.text?.toLowerCase().includes('language')
-      );
-
-      const nameValue = nameQuestion
-        ? freeTexts[nameQuestion.id]?.trim()
-        : undefined;
-
-      // Language is stored as an answer_option_id UUID
-      // Look up the label from the question's answer_options
-      const langOptionId = langQuestion
-        ? selections[langQuestion.id]
-        : undefined;
-
-      const langOption = langQuestion?.answer_options?.find(
-        o => o.id === langOptionId
-      );
-
-      const languageCode = ({
-        'English': 'en',
-        'Danish': 'da',
-        'Bulgarian': 'bg',
-        'Hungarian': 'hu',
-      } as Record<string, string>)[langOption?.label ?? ''] ?? 'en';
-
-      // Build profile update object — only include defined values
-      const profileUpdate: Record<string, string> = {};
-      if (nameValue) profileUpdate.name = nameValue;
-      if (langOption) profileUpdate.preferred_language = languageCode;
-
-      if (Object.keys(profileUpdate).length > 0) {
-        await supabase
-          .from('profiles')
-          .update(profileUpdate)
-          .eq('id', userId);
-      }
-
+      console.log('[quiz] advancing to next section, current quiz_step:', currentGroupIndex, 'NOT resetting');
       onNext();
     }
   };
@@ -167,7 +232,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
     }
   };
 
-  if (loading) {
+  if (loading || !quizStepLoaded) {
     return (
       <Flex direction="column" align="center" justify="center" minH="420px" gap={3}>
         <Spinner size="lg" color="purple.500" />

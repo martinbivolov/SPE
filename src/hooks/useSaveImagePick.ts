@@ -38,7 +38,14 @@ export const useSaveImagePick = (): SaveImagePickResult => {
 		setError(null);
 
 		try {
-			// Insert one image_picker_responses row per selected image.
+			// Delete existing picks then insert fresh selections.
+			const { error: deleteError } = await supabase
+				.from('image_picker_responses')
+				.delete()
+				.eq('user_id', userId);
+
+			if (deleteError) throw new Error(deleteError.message);
+
 			const { error: insertError } = await supabase
 				.from('image_picker_responses')
 				.insert(

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Flex, Splitter, Text } from '@chakra-ui/react';
+import { FiMusic } from 'react-icons/fi';
 import StageButton from './StageButton';
 
 interface SoundTutorialProps {
@@ -7,22 +8,64 @@ interface SoundTutorialProps {
   onBack: () => void;
 }
 
+const MusicBubble: React.FC<{
+  style?: React.CSSProperties;
+  highlighted?: boolean;
+}> = ({ style, highlighted }) => (
+  <Box style={{ position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}>
+    {[84, 60, 40].map((size, i) => (
+      <Box key={i} style={{
+        position: 'absolute', width: size, height: size,
+        borderRadius: '50%',
+        border: highlighted ? '2.5px solid #7c3aed' : '2px solid #6e1cff',
+        animation: `pulse 2.2s infinite ease-out ${i * 0.4}s`,
+        opacity: highlighted ? 0.9 : 0.4,
+        transition: 'opacity 0.4s ease, border-color 0.4s ease',
+      }} />
+    ))}
+    <Box style={{
+      width: 36, height: 36, borderRadius: '50%',
+      background: highlighted ? '#7c3aed' : '#ede9fe',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1,
+      boxShadow: highlighted
+        ? '0 0 0 4px rgba(124,58,237,0.3), 0 2px 8px rgba(110,28,255,0.4)'
+        : '0 2px 8px rgba(110, 28, 255, 0.25)',
+      transition: 'background 0.4s ease, box-shadow 0.4s ease',
+    }}>
+      <FiMusic size={18} color={highlighted ? 'white' : '#6e1cff'} />
+    </Box>
+  </Box>
+);
+
+const stepTitles = [
+  "Your Journey",
+  "Two Versions",
+  "Explore the Sounds",
+  "Try It Yourself",
+];
+
 const tutorialSteps = [
-  "You’re about to move through a series of everyday moments…\nlike passing through parts of your day.",
-  "We are going to show you two versions of each. As you listen, the sounds may begin to shift.",
-  "Notice how the environment feels—\nhow sounds stand out, how they blend,\nand how the space is perceived.",
-  "After each moment, you can explore the sounds more closely.\nThis isn’t about understanding speech,\nbut about how the sounds feel to you. Choose\nthe version that best reflects how your world sounds.",
+  "You are about to move through a series of everyday moments,\nlike passing through parts of your day.",
+  "We will play each scene twice.\nListen carefully — one version at a time.",
+  "After listening, you can press and hold the glowing objects to hear their sounds.",
+  "You can also drag the divider left or right\nto reveal more of either version.\nTry it now.",
 ];
 
 const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
-  const [phase, setPhase] = useState<'intro' | 'tutorial'>('intro');
+  const [phase, setPhase] = useState<'intro' | 'journey' | 'tutorial'>('tutorial');
+  const [journeyStep, setJourneyStep] = useState(-1);
   const [step, setStep] = useState(0);
   const [sizes, setSizes] = useState<[number, number]>([50, 50]);
   const [animateCircles, setAnimateCircles] = useState(false);
 
+  const [cardVisible, setCardVisible] = useState(true);
+  const [highlightSide, setHighlightSide] = useState<'left' | 'right' | null>(null);
+  const [highlightBubble, setHighlightBubble] = useState<0 | 1 | null>(null);
+
   const animationRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const animationCompleteRef = useRef(false);
+  const journeyTimeoutsRef = useRef<number[]>([]);
 
   const isLastStep = step === tutorialSteps.length - 1;
 
@@ -30,6 +73,9 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
     if (phase !== 'tutorial') return;
 
     setAnimateCircles(false);
+    setHighlightSide(null);
+    setHighlightBubble(null);
+    setJourneyStep(-1);
 
     if (animationRef.current) {
       window.clearInterval(animationRef.current);
@@ -42,92 +88,90 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
 
     if (step === 0) {
       setSizes([50, 50]);
+      timeoutRef.current = window.setTimeout(() => {
+        setJourneyStep(0);
+        timeoutRef.current = window.setTimeout(() => {
+          setJourneyStep(1);
+          timeoutRef.current = window.setTimeout(() => {
+            setJourneyStep(2);
+            timeoutRef.current = window.setTimeout(() => {
+              setJourneyStep(3);
+            }, 500);
+          }, 500);
+        }, 500);
+      }, 400);
       return;
     }
 
-    // Step 2 text:
-    // start from middle -> go right -> pause -> go left -> pause -> back to middle
     if (step === 1) {
       setSizes([50, 50]);
       animationCompleteRef.current = false;
 
-      const RIGHT_TARGET = 82;
-      const LEFT_TARGET = 18;
+      const TICK_MS = 30;
+      const STEP_SIZE = 0.5;
+      const PAUSE_MS = 2000;
+      const RIGHT_TARGET = 85;
+      const LEFT_TARGET = 15;
       const CENTER_TARGET = 50;
-      const STEP_SIZE = 1;
-      const TICK_MS = 45;
-      const PAUSE_MS = 450;
 
-      const startMove = (direction: 'right' | 'left' | 'center') => {
+      const startMove = (
+        direction: 'right' | 'left' | 'center',
+        onComplete?: () => void,
+      ) => {
+        if (animationRef.current) {
+          window.clearInterval(animationRef.current);
+        }
         animationRef.current = window.setInterval(() => {
-          // Stop all updates if animation is complete
-          if (animationCompleteRef.current) {
-            if (animationRef.current) {
-              window.clearInterval(animationRef.current);
-              animationRef.current = null;
-            }
-            return;
-          }
           setSizes((prev) => {
             const left = prev[0];
-
             if (direction === 'right') {
               if (left >= RIGHT_TARGET) {
-                if (animationRef.current) {
-                  window.clearInterval(animationRef.current);
-                  animationRef.current = null;
-                }
-                timeoutRef.current = window.setTimeout(() => {
-                  startMove('left');
-                }, PAUSE_MS);
+                window.clearInterval(animationRef.current!);
+                onComplete?.();
                 return [RIGHT_TARGET, 100 - RIGHT_TARGET];
               }
-
-              const nextLeft = Math.min(left + STEP_SIZE, RIGHT_TARGET);
-              return [nextLeft, 100 - nextLeft];
+              const next = Math.min(left + STEP_SIZE, RIGHT_TARGET);
+              return [next, 100 - next];
             }
-
             if (direction === 'left') {
               if (left <= LEFT_TARGET) {
-                if (animationRef.current) {
-                  window.clearInterval(animationRef.current);
-                  animationRef.current = null;
-                }
-                timeoutRef.current = window.setTimeout(() => {
-                  startMove('center');
-                }, PAUSE_MS);
+                window.clearInterval(animationRef.current!);
+                onComplete?.();
                 return [LEFT_TARGET, 100 - LEFT_TARGET];
               }
-
-              const nextLeft = Math.max(left - STEP_SIZE, LEFT_TARGET);
-              return [nextLeft, 100 - nextLeft];
+              const next = Math.max(left - STEP_SIZE, LEFT_TARGET);
+              return [next, 100 - next];
             }
-
             // center
-            const distToCenter = Math.abs(left - CENTER_TARGET);
-            if (distToCenter <= STEP_SIZE) {
-              if (animationRef.current) {
-                window.clearInterval(animationRef.current);
-                animationRef.current = null;
-              }
+            const dist = Math.abs(left - CENTER_TARGET);
+            if (dist <= STEP_SIZE) {
+              window.clearInterval(animationRef.current!);
               animationCompleteRef.current = true;
-              // Hard snap after current render cycle completes
+              onComplete?.();
               setTimeout(() => setSizes([50, 50]), 0);
               return [CENTER_TARGET, CENTER_TARGET];
             }
-
-            if (left > CENTER_TARGET) {
-              return [left - STEP_SIZE, 100 - (left - STEP_SIZE)];
-            } else {
-              return [left + STEP_SIZE, 100 - (left + STEP_SIZE)];
-            }
+            const next = left > CENTER_TARGET ? left - STEP_SIZE : left + STEP_SIZE;
+            return [next, 100 - next];
           });
         }, TICK_MS);
       };
 
       timeoutRef.current = window.setTimeout(() => {
-        startMove('right');
-      }, 120);
+        startMove('right', () => {
+          setHighlightSide('right');
+          timeoutRef.current = window.setTimeout(() => {
+            setHighlightSide(null);
+            startMove('left', () => {
+              setHighlightSide('left');
+              timeoutRef.current = window.setTimeout(() => {
+                setHighlightSide(null);
+                startMove('center');
+              }, PAUSE_MS);
+            });
+          }, PAUSE_MS);
+        });
+      }, 500);
 
       return () => {
         if (animationRef.current) {
@@ -141,8 +185,13 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
       };
     }
 
-    if (step >= 2) {
+    if (step === 2) {
       setAnimateCircles(true);
+      setSizes([50, 50]);
+      setHighlightBubble(0);
+    }
+
+    if (step === 3) {
       setSizes([50, 50]);
     }
 
@@ -157,6 +206,30 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
       }
     };
   }, [phase, step]);
+
+  useEffect(() => {
+    if (phase !== 'tutorial') return;
+    setCardVisible(false);
+    const id = window.setTimeout(() => setCardVisible(true), 150);
+    return () => window.clearTimeout(id);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (phase !== 'journey') return;
+    setJourneyStep(-1);
+    journeyTimeoutsRef.current.forEach(window.clearTimeout);
+    journeyTimeoutsRef.current = [
+      window.setTimeout(() => setJourneyStep(0), 400),
+      window.setTimeout(() => setJourneyStep(1), 900),
+      window.setTimeout(() => setJourneyStep(2), 1400),
+      window.setTimeout(() => setJourneyStep(3), 1900),
+      window.setTimeout(() => { setPhase('tutorial'); setStep(0); }, 3200),
+    ];
+    return () => {
+      journeyTimeoutsRef.current.forEach(window.clearTimeout);
+      journeyTimeoutsRef.current = [];
+    };
+  }, [phase]);
 
   return (
     <Box
@@ -173,49 +246,85 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
       position="relative"
       overflow="hidden"
     >
-      {phase === 'intro' && (
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          flex="1"
-          textAlign="center"
-        >
-          <Box
-            w="88px"
-            h="88px"
-            borderRadius="50%"
-            bg="#efe2ff"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            mb={6}
-          >
-            <Text fontSize="42px" color="#9b4dff" fontWeight="700">
-              i
-            </Text>
-          </Box>
-
-          <Text fontSize="42px" fontWeight="800" mb={4} color="#222">
-            How It Works
-          </Text>
-
-          <Text color="#777" maxW="640px" fontSize="18px" lineHeight="1.8">
-            This is where we’ll walk you through the listening experience step by step before the story begins.
-          </Text>
+      {phase === "journey" && (
+        <Flex direction="column" align="center" justify="center" flex="1">
+          <Flex align="center">
+            {stepTitles.map((_, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && (
+                  <Box style={{
+                    width: 60, height: 2,
+                    background: i <= journeyStep ? '#7c3aed' : '#e5e7eb',
+                    transition: 'background 0.3s ease',
+                  }} />
+                )}
+                <Box style={{
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: i <= journeyStep ? '#7c3aed' : 'white',
+                  border: `2px solid ${i <= journeyStep ? '#7c3aed' : '#e5e7eb'}`,
+                  boxShadow: i <= journeyStep ? '0 0 0 4px rgba(124,58,237,0.2)' : 'none',
+                  transform: i === journeyStep ? 'scale(1.3)' : 'scale(1)',
+                  transition: 'background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease',
+                }} />
+              </React.Fragment>
+            ))}
+          </Flex>
         </Flex>
       )}
 
       {phase === 'tutorial' && step < tutorialSteps.length && (
         <>
+          {/* Journey dots — step 0 only */}
+          {step === 0 && (
+            <Box
+              position="absolute"
+              inset={0}
+              zIndex={2}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              style={{ pointerEvents: 'none' }}
+            >
+              <Box style={{ display: 'flex', alignItems: 'center' }}>
+                {stepTitles.map((_, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && (
+                      <Box style={{
+                        width: 90, height: 2,
+                        background: i <= journeyStep ? '#7c3aed' : '#e5e7eb',
+                        transition: 'background 0.3s ease',
+                      }} />
+                    )}
+                    <Box style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: i <= journeyStep ? '#7c3aed' : 'white',
+                      border: `2px solid ${i <= journeyStep ? '#7c3aed' : '#e5e7eb'}`,
+                      boxShadow: i <= journeyStep ? '0 0 0 4px rgba(124,58,237,0.2)' : 'none',
+                      transform: i === journeyStep ? 'scale(1.3)' : 'scale(1)',
+                      transition: 'all 0.3s ease',
+                    }} />
+                  </React.Fragment>
+                ))}
+              </Box>
+            </Box>
+          )}
+
           {/* Pure CSS split — no Chakra Splitter, no internal state */}
-          <Box
+          {step !== 0 && <Box
             position="absolute"
             inset={0}
             zIndex={1}
             display="flex"
             style={{ pointerEvents: 'none' }}
           >
+            {step === 2 && (
+              <Box style={{
+                position: 'absolute', inset: 0,
+                background: 'rgba(0,0,0,0.6)',
+                zIndex: 4, pointerEvents: 'none',
+              }} />
+            )}
+
             {/* Left panel — width driven by sizes[0] */}
             <Box
               style={{
@@ -227,27 +336,29 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                 transition: 'width 0.04s linear',
               }}
             >
+              <Box position="absolute" inset={0}
+                bg={highlightSide === 'right' ? 'rgba(0,0,0,0.45)' : 'transparent'}
+                style={{ transition: 'background 0.5s ease', pointerEvents: 'none', zIndex: 2 }}
+              />
+              {highlightSide === 'left' && (
+                <Box position="absolute" top={4} right={4} zIndex={3}
+                  bg="purple.500" color="white" px={3} py={1}
+                  borderRadius="full" fontSize="sm" fontWeight="700"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  Version 2
+                </Box>
+              )}
               {animateCircles && (
                 <>
-                  {[
-                    { top: '74%', left: '16%' },
-                    { top: '52%', left: '62%' },
-                  ].map((pos, i) => (
-                    <Box
-                      key={`left-${i}`}
-                      style={{
-                        position: 'absolute',
-                        top: pos.top,
-                        left: pos.left,
-                        width: 84,
-                        height: 84,
-                        borderRadius: '50%',
-                        border: '3px solid #6e1cff',
-                        animation: 'pulse 2.2s infinite ease-out',
-                        opacity: 0.75,
-                      }}
-                    />
-                  ))}
+                  {step === 2 && highlightBubble === 0 ? (
+                    <Box style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }}>
+                      <MusicBubble style={{ top: '68%', left: '12%' }} highlighted />
+                    </Box>
+                  ) : (
+                    <MusicBubble style={{ top: '68%', left: '12%' }} highlighted={step === 2 && highlightBubble === 0} />
+                  )}
+                  <MusicBubble style={{ top: '42%', left: '55%' }} highlighted={step === 2 && highlightBubble === 1} />
                 </>
               )}
             </Box>
@@ -285,31 +396,33 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                 overflow: 'hidden',
               }}
             >
+              <Box position="absolute" inset={0}
+                bg={highlightSide === 'left' ? 'rgba(0,0,0,0.45)' : 'transparent'}
+                style={{ transition: 'background 0.5s ease', pointerEvents: 'none', zIndex: 2 }}
+              />
+              {highlightSide === 'right' && (
+                <Box position="absolute" top={4} left={4} zIndex={3}
+                  bg="purple.500" color="white" px={3} py={1}
+                  borderRadius="full" fontSize="sm" fontWeight="700"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  Version 1
+                </Box>
+              )}
               {animateCircles && (
                 <>
-                  {[
-                    { top: '28%', left: '28%' },
-                    { top: '72%', left: '64%' },
-                  ].map((pos, i) => (
-                    <Box
-                      key={`right-${i}`}
-                      style={{
-                        position: 'absolute',
-                        top: pos.top,
-                        left: pos.left,
-                        width: 84,
-                        height: 84,
-                        borderRadius: '50%',
-                        border: '3px solid #6e1cff',
-                        animation: 'pulse 2.2s infinite ease-out',
-                        opacity: 0.75,
-                      }}
-                    />
-                  ))}
+                  {step === 2 && highlightBubble === 0 ? (
+                    <Box style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }}>
+                      <MusicBubble style={{ top: '22%', left: '22%' }} highlighted />
+                    </Box>
+                  ) : (
+                    <MusicBubble style={{ top: '22%', left: '22%' }} highlighted={step === 2 && highlightBubble === 0} />
+                  )}
+                  <MusicBubble style={{ top: '65%', left: '58%' }} highlighted={step === 2 && highlightBubble === 1} />
                 </>
               )}
             </Box>
-          </Box>
+          </Box>}
 
           {/* Chakra Splitter ONLY for step 3 where user drags */}
           {step === 3 && (
@@ -346,72 +459,85 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
             </Splitter.Root>
           )}
 
+          {/* Info card — TutorialOverlay tooltip style */}
           <Box
             style={{
               position: 'absolute',
               top: 32,
               left: 32,
-              width: 520,
-              maxWidth: 'calc(100% - 64px)',
-              background: '#d8d8d8',
-              borderRadius: 14,
-              padding: 20,
+              width: 280,
+              background: 'white',
+              borderRadius: 12,
+              padding: '16px',
               zIndex: 10,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              border: '1px solid #e5e7eb',
+              opacity: cardVisible ? 1 : 0,
+              transition: 'opacity 150ms ease',
             }}
           >
-            <Box
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: '50%',
-                background: '#b8d4e3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 16,
-              }}
-            >
-              <Text fontWeight="700" fontSize="28px" color="#3f4b57">
-                i
-              </Text>
-            </Box>
+            <Flex gap="8px" mb={2}>
+              {stepTitles.map((_, i) => (
+                <Box key={i} style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: i === step ? '#7c3aed' : '#e5e7eb',
+                  transition: 'background 0.3s ease',
+                }} />
+              ))}
+            </Flex>
 
             <Text
               style={{
-                color: '#555',
-                fontSize: 18,
-                lineHeight: 1.45,
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 6,
+              }}
+            >
+              {stepTitles[step]}
+            </Text>
+
+            <Text
+              style={{
+                color: '#111',
+                fontSize: 15,
+                lineHeight: 1.5,
                 whiteSpace: 'pre-line',
+                marginBottom: 12,
               }}
             >
               {tutorialSteps[step]}
             </Text>
 
-            <Box mt={4}>
-              <StageButton
-                variantType="subtle"
-                onClick={() => {
-                  if (isLastStep) {
-                    onNext();
-                  } else {
-                    setStep((prev) => prev + 1);
-                  }
-                }}
-              >
-                {isLastStep ? 'Start' : 'ok'}
-              </StageButton>
-            </Box>
+            <Text style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>
+              {isLastStep ? '' : 'Click ok to continue'}
+            </Text>
+
+            <StageButton
+              variantType="subtle"
+              onClick={() => {
+                if (isLastStep) {
+                  onNext();
+                } else {
+                  setStep((prev) => prev + 1);
+                }
+              }}
+            >
+              {isLastStep ? 'Start' : 'ok'}
+            </StageButton>
           </Box>
 
           <style>
             {`
               @keyframes pulse {
                 0% {
-                  transform: scale(0.65);
-                  opacity: 0.75;
+                  transform: scale(0.8);
+                  opacity: 0.6;
                 }
                 100% {
-                  transform: scale(2.25);
+                  transform: scale(1.8);
                   opacity: 0;
                 }
               }
@@ -432,25 +558,12 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
           Back
         </StageButton>
 
-        {phase === 'intro' ? (
-          <StageButton
-            variantType="primary"
-            onClick={() => {
-              setPhase('tutorial');
-              setStep(0);
-              setSizes([50, 50]);
-            }}
-          >
-            Next
-          </StageButton>
-        ) : (
-          <StageButton
-            variantType={isLastStep ? 'primary' : 'disabled'}
-            onClick={isLastStep ? onNext : undefined}
-          >
-            Next
-          </StageButton>
-        )}
+        <StageButton
+          variantType={isLastStep ? 'primary' : 'disabled'}
+          onClick={isLastStep ? onNext : undefined}
+        >
+          Next
+        </StageButton>
       </Flex>
     </Box>
   );
