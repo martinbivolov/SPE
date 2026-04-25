@@ -71,9 +71,8 @@ const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onSta
           _dark={{ color: 'gray.400' }}
           lineHeight="1.7"
         >
-          You're about to experience a series of listening scenes crafted just for you.
-          Put on your headphones, relax, and let us learn how you hear the world.
-          Before we begin, we'll quickly guide you through how it works.
+          You're about to experience a sound exploration crafted just for you.
+          Let us understand how you hear the worls, but before we begin, we'll quickly guide you through how it works.
         </Text>
 
         {/* Start card / button */}
@@ -100,7 +99,7 @@ const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onSta
             transform: 'translateY(0)',
           }}
         >
-          Start Listening
+          Start
         </Box>
       </Flex>
 
