@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 
 interface ReplayOptionsModalProps {
   isOpen: boolean;
@@ -183,18 +184,19 @@ export const ReplayOptionsModal: React.FC<ReplayOptionsModalProps> = ({
   onReplayBoth,
   onSkipReplay,
 }) => {
+  const { t } = useTranslation();
   const replayOptions: OptionConfig[] = [
-    { key: 'replay-first', label: 'Listen First variation', onClick: onReplayFirst },
-    { key: 'replay-second', label: 'Listen Second variation', onClick: onReplaySecond },
-    { key: 'replay-both', label: 'Listen Both variation', onClick: onReplayBoth },
-    { key: 'skip-replay', label: 'I do not want to listen to either', onClick: onSkipReplay },
+    { key: 'replay-first', label: t('replay.version1'), onClick: onReplayFirst },
+    { key: 'replay-second', label: t('replay.version2'), onClick: onReplaySecond },
+    { key: 'replay-both', label: t('replay.both'), onClick: onReplayBoth },
+    { key: 'skip-replay', label: t('replay.skip'), onClick: onSkipReplay },
   ];
 
   return (
     <QuestionModal
       isOpen={isOpen}
       step={1}
-      title="Do you want to listen to one or both variations again?"
+      title={t('replay.question')}
       options={replayOptions}
     />
   );
@@ -205,16 +207,17 @@ export const PreferenceModal: React.FC<PreferenceModalProps> = ({
   selectedVersion,
   onSelect,
 }) => {
+  const { t } = useTranslation();
   const preferenceOptions: OptionConfig[] = [
-    { key: 'version-a', label: 'Version 1', isSelected: selectedVersion === 'A', onClick: () => onSelect('A') },
-    { key: 'version-b', label: 'Version 2', isSelected: selectedVersion === 'B', onClick: () => onSelect('B') },
+    { key: 'version-a', label: t('sound.tutorial.versionOne'), isSelected: selectedVersion === 'A', onClick: () => onSelect('A') },
+    { key: 'version-b', label: t('sound.tutorial.versionTwo'), isSelected: selectedVersion === 'B', onClick: () => onSelect('B') },
   ];
 
   return (
     <QuestionModal
       isOpen={isOpen}
       step={2}
-      title="Which version did you prefer more?"
+      title={t('sound.preference.whichPrefer')}
       options={preferenceOptions}
     />
   );
@@ -229,38 +232,39 @@ export const StrengthModal: React.FC<StrengthModalProps> = ({
   submitError,
   title,
 }) => {
+  const { t } = useTranslation();
   const strengthOptions: OptionConfig[] = [
     {
       key: 'strength-1',
-      label: 'Very weak',
+      label: t('sound.preference.veryWeak'),
       isSelected: selectedStrength === 1,
       onClick: () => void onSubmit(1),
       loading: isSubmitting,
     },
     {
       key: 'strength-2',
-      label: 'Weak',
+      label: t('sound.preference.weak'),
       isSelected: selectedStrength === 2,
       onClick: () => void onSubmit(2),
       loading: isSubmitting,
     },
     {
       key: 'strength-3',
-      label: 'Moderate',
+      label: t('sound.preference.hesitant'),
       isSelected: selectedStrength === 3,
       onClick: () => void onSubmit(3),
       loading: isSubmitting,
     },
     {
       key: 'strength-4',
-      label: 'Strong',
+      label: t('sound.preference.strong'),
       isSelected: selectedStrength === 4,
       onClick: () => void onSubmit(4),
       loading: isSubmitting,
     },
     {
       key: 'strength-5',
-      label: 'Very strong',
+      label: t('sound.preference.veryStrong'),
       isSelected: selectedStrength === 5,
       onClick: () => void onSubmit(5),
       loading: isSubmitting,
@@ -271,8 +275,8 @@ export const StrengthModal: React.FC<StrengthModalProps> = ({
     <QuestionModal
       isOpen={isOpen}
       step={3}
-      title={title ?? 'How strong was your preference?'}
-      subtitle={preferredVersion ? `Preferred version: ${preferredVersion === 'A' ? 'Version 1' : 'Version 2'}` : undefined}
+      title={title ?? t('sound.preference.howStrong')}
+      subtitle={preferredVersion ? `Preferred version: ${preferredVersion === 'A' ? t('sound.tutorial.versionOne') : t('sound.tutorial.versionTwo')}` : undefined}
       options={strengthOptions}
       isSubmitting={isSubmitting}
       submitError={submitError}

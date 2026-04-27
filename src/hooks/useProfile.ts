@@ -25,5 +25,9 @@ export const useProfile = (userId: string) => {
       });
   }, [userId]);
 
-  return { profile, loading };
+  const updateLanguage = (code: string) => {
+    setProfile(prev => prev ? { ...prev, language: code } : null);
+  };
+
+  return { profile, loading, updateLanguage };
 };

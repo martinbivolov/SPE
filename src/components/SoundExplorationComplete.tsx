@@ -1,12 +1,14 @@
 import React from 'react';
 import { Box, Flex, Text, Icon } from '@chakra-ui/react';
 import { FiAward } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 interface SoundExplorationCompleteProps {
   onNext: () => void;
 }
 
 const SoundExplorationComplete: React.FC<SoundExplorationCompleteProps> = ({ onNext }) => {
+  const { t } = useTranslation();
   return (
     <Box
       maxW="1120px"
@@ -59,7 +61,7 @@ const SoundExplorationComplete: React.FC<SoundExplorationCompleteProps> = ({ onN
           _dark={{ color: 'gray.100' }}
           lineHeight="1.2"
         >
-          You've completed your sound journey!
+          {t('sound.complete.title')}
         </Text>
 
         {/* Description */}
@@ -69,9 +71,7 @@ const SoundExplorationComplete: React.FC<SoundExplorationCompleteProps> = ({ onN
           _dark={{ color: 'gray.400' }}
           lineHeight="1.7"
         >
-          Thank you for exploring the world of sound with us.
-          Your responses have helped us build your Digital Twin.
-          You can now review your personalised sound profile.
+          {t('sound.complete.description')}
         </Text>
 
         {/* Button */}
@@ -98,7 +98,7 @@ const SoundExplorationComplete: React.FC<SoundExplorationCompleteProps> = ({ onN
             transform: 'translateY(0)',
           }}
         >
-          View Your Digital Twin
+          {t('sound.complete.button')}
         </Box>
       </Flex>
     </Box>

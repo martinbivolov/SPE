@@ -7,6 +7,7 @@ interface QuotesQuestionProps {
   selectedOptionIds: string[];
   onToggle: (optionId: string) => void;
   hideQuestionTitle?: boolean;
+  translateOption?: (id: string, fallback: string) => string;
 }
 
 const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
@@ -14,6 +15,7 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
   selectedOptionIds,
   onToggle,
   hideQuestionTitle = false,
+  translateOption,
 }) => {
   const options = question.answer_options ?? [];
 
@@ -91,7 +93,7 @@ const QuotesQuestion: React.FC<QuotesQuestionProps> = ({
                 // don't double up with the decorative quote above and the
                 // closing mark below.
               >
-                {stripOuterQuotes(option.label)}
+                {stripOuterQuotes(translateOption ? translateOption(option.id, option.label) : option.label)}
               </Text>
 
               {/* Closing quote */}

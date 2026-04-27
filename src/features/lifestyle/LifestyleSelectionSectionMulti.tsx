@@ -1,8 +1,10 @@
 ﻿import React, { useMemo, useState } from 'react';
 import { Box, Flex, Spinner, Stack, Text } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveLifestyleAnswers } from '../../hooks/useSaveLifestyleAnswers';
+import { useTranslations } from '../../hooks/useTranslations';
 import QuotesQuestion from './QuotesQuestion';
 
 interface LifestyleSelectionSectionMultiProps {
@@ -20,6 +22,9 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
   selectedOptionIds,
   onSelectionChange,
 }) => {
+  const { t } = useTranslation();
+  const { translate: translateGroup } = useTranslations('lifestyle_question_groups', 'title');
+  const { translate: translateOption } = useTranslations('answer_options', 'label');
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveLifestyleAnswers();
 
@@ -134,7 +139,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
         _dark={{ color: 'gray.100' }}
         mb={2}
       >
-        Everyone listens differently. Let's understand your world.
+        {t('sections.listenDifferently')}
       </Text>
 
       {currentGroup && (
@@ -145,7 +150,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
           _dark={{ color: 'gray.400' }}
           mb={4}
         >
-          {currentGroup.title} &mdash; Step {currentGroupIndex + 1} of {multiGroups.length}
+          {translateGroup(currentGroup.id, currentGroup.title)} &mdash; {t('lifestyle.step', { current: currentGroupIndex + 1, total: multiGroups.length })}
         </Text>
       )}
 
@@ -176,6 +181,7 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
                 selectedOptionIds={selectedOptionIds}
                 onToggle={handleOptionToggle}
                 hideQuestionTitle
+                translateOption={translateOption}
               />
             ))}
           </Stack>
@@ -184,14 +190,14 @@ const LifestyleSelectionSectionMulti: React.FC<LifestyleSelectionSectionMultiPro
 
       <Flex justify="space-between" w="100%">
         <StageButton variantType="outline" onClick={handleBackGroup}>
-          Back
+          {t('common.back')}
         </StageButton>
         <StageButton
           variantType="primary"
           loading={saving}
           onClick={() => void handleNextGroup()}
         >
-          Next
+          {t('common.next')}
         </StageButton>
       </Flex>
     </Box>

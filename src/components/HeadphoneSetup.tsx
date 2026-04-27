@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, Flex, Text, Icon, SimpleGrid } from '@chakra-ui/react';
 import { FiHeadphones, FiWifi, FiVolumeX } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import StageButton from './StageButton';
 import { useVolume } from '../contexts/VolumeContext';
 
@@ -12,17 +13,12 @@ interface HeadphoneSetupProps {
   onBack: () => void;
 }
 
-const connectionOptions: {
-  key: OptionKey;
-  label: string;
-  icon: any;
-  description: string;
-}[] = [
-  { key: 'wired', label: 'By Wire', icon: FiHeadphones, description: 'Plug in your headphones' },
-  { key: 'wireless', label: 'Wireless', icon: FiWifi, description: 'Bluetooth or wireless' },
-];
-
 const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
+  const { t } = useTranslation();
+  const connectionOptions: { key: OptionKey; label: string; icon: any }[] = [
+    { key: 'wired', label: t('headphones.wired'), icon: FiHeadphones },
+    { key: 'wireless', label: t('headphones.wireless'), icon: FiWifi },
+  ];
   const [choice, setChoice] = useState<ConnectionChoice>(null);
   const { volume, setVolume } = useVolume();
   const volumePct = Math.round(volume * 100);
@@ -50,11 +46,11 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
     >
       {/* Title */}
       <Text fontSize="4xl" fontWeight="800" textAlign="center" mb={2}>
-        Before we begin
+        {t('headphones.title')}
       </Text>
 
       <Text fontSize="lg" color="gray.500" textAlign="center" mb={10}>
-        Last touch before we begin — we recommend using headphones. How would you like to connect them?
+        {t('headphones.subtitle')}
       </Text>
 
       {/* Connection options */}
@@ -95,12 +91,8 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
                 <Icon as={opt.icon} boxSize={8} color={selected ? 'purple.500' : 'gray.400'} />
               </Flex>
 
-              <Text fontWeight="700" fontSize="xl" color={selected ? 'purple.600' : 'gray.700'}>
+              <Text fontWeight="700" fontSize="xl" color={selected ? 'purple.600' : 'gray.700'} textAlign="center">
                 {opt.label}
-              </Text>
-
-              <Text fontSize="sm" color="gray.400">
-                {opt.description}
               </Text>
             </Box>
           );
@@ -187,11 +179,11 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
       {/* Navigation */}
       <Flex justify="space-between" mt="auto" pt={6}>
         <StageButton variantType="outline" onClick={onBack}>
-          Back
+          {t('common.back')}
         </StageButton>
 
         <StageButton variantType={choice ? 'primary' : 'disabled'} onClick={choice ? onNext : undefined}>
-          Next
+          {t('common.next')}
         </StageButton>
       </Flex>
     </Box>

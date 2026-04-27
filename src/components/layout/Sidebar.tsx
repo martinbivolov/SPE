@@ -1,5 +1,6 @@
 import React from "react";
 import { Stack, Box, Button } from "@chakra-ui/react";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   activeItem: "Profile" | "Lifestyle" | "Sound" | "DigitalTwin";
@@ -9,11 +10,12 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItem, isOpen, onClose, onOpen }) => {
+  const { t } = useTranslation();
   const items = [
-    { label: "Profile", key: "Profile" },
-    { label: "Lifestyle Exploration", key: "Lifestyle" },
-    { label: "Sound Exploration", key: "Sound" },
-    { label: "Your Digital Twin", key: "DigitalTwin" },
+    { label: t('nav.profile'), key: "Profile" },
+    { label: t('nav.lifestyle'), key: "Lifestyle" },
+    { label: t('nav.sound'), key: "Sound" },
+    { label: t('nav.digitalTwin'), key: "DigitalTwin" },
   ] as const;
 
   return (

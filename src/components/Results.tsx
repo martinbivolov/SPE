@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useLifestyleQuestions } from "../hooks/useLifestyleQuestions";
 import { useImagePickerOptions } from "../hooks/useImagePickerOptions";
@@ -32,6 +33,7 @@ interface ResultsProps {
 }
 
 const Results: React.FC<ResultsProps> = ({ userId }) => {
+  const { t } = useTranslation();
   const [openLifestyle, setOpenLifestyle] = useState<string | null>(null);
   const [openSound, setOpenSound] = useState<string | null>(null);
 
@@ -159,11 +161,11 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
 
   const strengthLabel = (strength: number): string => {
     const labels: Record<number, string> = {
-      1: 'Very Weak',
-      2: 'Weak',
-      3: 'Hesitant',
-      4: 'Strong',
-      5: 'Very Strong',
+      1: t('sound.preference.veryWeak'),
+      2: t('sound.preference.weak'),
+      3: t('sound.preference.hesitant'),
+      4: t('sound.preference.strong'),
+      5: t('sound.preference.veryStrong'),
     };
     return labels[strength] ?? 'Unknown';
   };
@@ -192,13 +194,13 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
   return (
     <div className="dt-container">
       {/* ================= LIFESTYLE ================= */}
-      <h2>Lifestyle Results</h2>
+      <h2>{t('digitalTwin.lifestyle')}</h2>
 
       <div className="dt-header">
         <div></div>
-        <div>Category</div>
-        <div>Question / Item</div>
-        <div>User Selection</div>
+        <div>{t('digitalTwin.category')}</div>
+        <div>{t('digitalTwin.question')}</div>
+        <div>{t('digitalTwin.selection')}</div>
       </div>
 
       {groups.map((group) => {
@@ -282,19 +284,19 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
         ))}
 
       {/* ================= SOUND ================= */}
-      <h2 className="dt-section">Sound Preference Results</h2>
+      <h2 className="dt-section">{t('digitalTwin.sound')}</h2>
 
       <div className="dt-header">
         <div></div>
-        <div>Created</div>
-        <div>Preference</div>
-        <div>Variant</div>
+        <div>{t('digitalTwin.created')}</div>
+        <div>{t('digitalTwin.preference')}</div>
+        <div>{t('digitalTwin.variant')}</div>
       </div>
 
       {processedSoundResults.length === 0 ? (
         <div className="dt-row dt-alt">
           <div></div>
-          <div>No results yet</div>
+          <div>{t('digitalTwin.noResults')}</div>
           <div>—</div>
           <div>—</div>
         </div>
@@ -310,20 +312,20 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
               <div>{strengthLabel(result.preference_strength)}</div>
               <div>
                 {result.preferred_version === 'A'
-                  ? 'Prefer first variant'
-                  : 'Prefer second variant'}
+                  ? t('digitalTwin.preferFirst')
+                  : t('digitalTwin.preferSecond')}
               </div>
             </div>
 
             {result.post && (
               <div className="dt-row dt-alt">
                 <div></div>
-                <div>After exploring</div>
+                <div>{t('digitalTwin.afterExploring')}</div>
                 <div>{strengthLabel(result.post.preference_strength)}</div>
                 <div>
                   {result.post.preferred_version === 'A'
-                    ? 'Still prefer first variant'
-                    : 'Changed to second variant'}
+                    ? t('digitalTwin.stillPreferFirst')
+                    : t('digitalTwin.changedToSecond')}
                 </div>
               </div>
             )}
@@ -332,13 +334,13 @@ const Results: React.FC<ResultsProps> = ({ userId }) => {
               <div className="dt-audio">
                 <div className="dt-audio-grid">
                   <div>
-                    <p>Variant A</p>
+                    <p>{t('digitalTwin.variantA')}</p>
                     <audio controls>
                       <source src={result.video_a_url} />
                     </audio>
                   </div>
                   <div>
-                    <p>Variant B</p>
+                    <p>{t('digitalTwin.variantB')}</p>
                     <audio controls>
                       <source src={result.video_b_url} />
                     </audio>

@@ -1,0 +1,124 @@
+{
+  "nav": {
+    "profile": "Profil",
+    "lifestyle": "Életmód felfedezése",
+    "sound": "Hangfelfedezés",
+    "digitalTwin": "Az Ön digitális ikre"
+  },
+  "common": {
+    "back": "Vissza",
+    "next": "Tovább",
+    "ok": "OK",
+    "start": "Kezdés",
+    "selectOption": "Válasszon egy lehetőséget",
+    "typeAnswer": "Írja be válaszát…",
+    "yes": "Igen",
+    "no": "Nem"
+  },
+  "profile": {
+    "title": "Ismerjük meg jobban",
+    "step": "Profil — {{current}}. lépés / {{total}}",
+    "firstName": "Keresztnév és Vezetéknév",
+    "age": "Kor",
+    "email": "E-mail",
+    "firstTime": "Először használja ezt a rendszert?",
+    "language": "Preferred language",
+    "languages": {
+      "english": "Angol",
+      "danish": "Dán",
+      "bulgarian": "Bolgár",
+      "hungarian": "Magyar",
+      "portuguese": "Portugál (Brazília)"
+    }
+  },
+  "lifestyle": {
+    "step": "{{current}}. lépés / {{total}}"
+  },
+  "sections": {
+    "listenDifferently": "Mindenki másképp hall. Ismerjük meg az Ön világát.",
+    "yourListeningWorld": "Az Ön hallási világa",
+    "whatAppliesToYou": "Mi vonatkozik Önre",
+    "comfortFocus": "Kényelem és fókusz"
+  },
+  "sound": {
+    "welcome": {
+      "title": "Üdvözöljük a hangfelfedezésben",
+      "description": "Személyre szabott hallási jeleneteket fog megtapasztalni. Vegye fel a fejhallgatóját, lazítson, és hadd tanuljuk meg, hogyan hallja a világot. Mielőtt elkezdenénk, röviden bemutatjuk, hogyan működik.",
+      "start": "Hallgatás megkezdése"
+    },
+    "tutorial": {
+      "step1Title": "Az Ön utazása",
+      "step1": "Mindennapos pillanatokkal fog találkozni, mintha a napja különböző részeit járná be.",
+      "step2Title": "Két verzió",
+      "step2": "Minden jelenetet kétszer játszunk le. Figyeljen figyelmesen — egyszerre egy verziót.",
+      "step3Title": "Fedezze fel a hangokat",
+      "step3": "Hallgatás után tartsa lenyomva a kiemelt tárgyakat a hangok meghallgatásához.",
+      "step4Title": "Próbálja ki maga",
+      "step4": "Az elválasztót balra vagy jobbra húzhatja, hogy többet lásson az egyes verziókból.",
+      "clickToContinue": "Kattintson az OK gombra a folytatáshoz",
+      "versionOne": "1. verzió",
+      "versionTwo": "2. verzió"
+    },
+    "preference": {
+      "watchVersion1": "Nézze meg az 1. verziót",
+      "watchVersion2": "Most nézze meg a 2. verziót.",
+      "whichPrefer": "Melyik verziót részesíti előnyben?",
+      "howStrong": "Mennyire erős ez az előnyben részesítés?",
+      "afterExploring": "A felfedezés után mennyire erős most a preferenciája?",
+      "afterExploringWhich": "A felfedezés után — melyik verziót részesíti még mindig előnyben?",
+      "exploreScene": "Fedezze fel a jelenetet és lépjen kapcsolatba a tárgyakkal.",
+      "replayOptions": "Visszajátszási lehetőségek: 1. verzió, 2. verzió vagy mindkettő.",
+      "nowVersion2": "Most hallgassa meg a 2. verziót",
+      "startingMoment": "Hamarosan kezdődik...",
+      "preferFirst": "Az első verziót részesítem előnyben",
+      "preferSecond": "A második verziót részesítem előnyben",
+      "veryWeak": "Nagyon gyenge",
+      "weak": "Gyenge",
+      "hesitant": "Bizonytalan",
+      "strong": "Erős",
+      "veryStrong": "Nagyon erős"
+    },
+    "complete": {
+      "title": "Befejezte a hangutazását!",
+      "description": "Köszönjük, hogy velünk fedezte fel a hangok világát. Válaszai segítségével megalkottuk digitális ikerét. Most megtekintheti személyre szabott hangprofilját.",
+      "button": "Digitális iker megtekintése"
+    },
+    "headphones": {
+      "title": "Mielőtt elkezdenénk",
+      "subtitle": "Mielőtt elkezdenénk, javasoljuk a fejhallgató használatát. Hogyan szeretné csatlakoztatni?",
+      "wired": "Vezetékes — Csatlakoztassa a fejhallgatót",
+      "wireless": "Vezeték nélküli — Bluetooth kapcsolat"
+    }
+  },
+  "replay": {
+    "question": "Szeretné újra meghallgatni az egyik vagy mindkét változatot?",
+    "version1": "1. verzió újra meghallgatása",
+    "version2": "2. verzió újra meghallgatása",
+    "both": "Mindkettő újra meghallgatása",
+    "skip": "Nem, köszönöm, folytatom"
+  },
+  "digitalTwin": {
+    "title": "Az Ön digitális ikre",
+    "lifestyle": "Életmód eredmények",
+    "sound": "Hangpreferencia eredmények",
+    "category": "Kategória",
+    "question": "Kérdés / Tétel",
+    "selection": "Felhasználói kiválasztás",
+    "created": "Létrehozva",
+    "preference": "Preferencia",
+    "variant": "Változat",
+    "noResults": "Még nincsenek eredmények",
+    "variantA": "A változat",
+    "variantB": "B változat",
+    "preferFirst": "Az első változatot részesítem előnyben",
+    "preferSecond": "A második változatot részesítem előnyben",
+    "afterExploring": "Felfedezés után",
+    "stillPreferFirst": "Még mindig az első változatot részesítem előnyben",
+    "changedToSecond": "A második változatra váltottam"
+  },
+  "imagePicker": {
+    "title": "Mi a helyzet a mindennapi életével?",
+    "step1": "Válassza ki, mi a legfontosabb Önnek — 1 / 2",
+    "step2": "Válassza ki, mi a legfontosabb Önnek — 2 / 2"
+  }
+}

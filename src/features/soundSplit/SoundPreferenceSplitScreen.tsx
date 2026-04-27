@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Circle, Flex, HStack, IconButton, Splitter, Text } from '@chakra-ui/react';
 import { FiInfo } from 'react-icons/fi';
 import SceneA from './SceneA';
@@ -58,6 +59,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const hasPlayedIntro = useRef(false);
 	const hasUsedReplay = useRef(false);
 
+	const { t } = useTranslation();
 	const { saveResult, loading: resultLoading, error: resultError } = useSaveSessionResult();
 
 	const currentScene = story.scenes[sceneIndex] ?? null;
@@ -186,7 +188,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 			setIsVideoPlaying(false);
 			animateDividerTo(100, sweepDurationMs, () => {
 				setSessionPhase('videoA');
-				setCaption('Watch Version 1');
+				setCaption(t('sound.preference.watchVersion1'));
 				playSrc(sceneA.videoUrl);
 			});
 		},
@@ -197,7 +199,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		(mode: SequenceMode, sweepDurationMs: number) => {
 			setSequenceMode(mode);
 			setIsVideoPlaying(false);
-			setCaption('Now watch Version 2.');
+			setCaption(t('sound.preference.watchVersion2'));
 			preloadInteractiveImage();
 			animateDividerTo(0, sweepDurationMs, () => {
 				setSessionPhase('videoB');
@@ -218,11 +220,11 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		if (hasUsedReplay.current) {
 			// Replay already used — skip straight to preference
 			setSessionPhase('preference');
-			setCaption('Which version did you prefer?');
+			setCaption(t('sound.preference.whichPrefer'));
 		} else {
 			// First time — show replay options
 			setSessionPhase('replay');
-			setCaption('Replay options: Version 1, Version 2, or both.');
+			setCaption(t('sound.preference.replayOptions'));
 		}
 	}, [beginWiggleWindow]);
 
@@ -369,12 +371,12 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const handleContinueFlow = useCallback(() => {
 		if (sessionPhase === 'replay') {
 			setSessionPhase('preference');
-			setCaption('Which version did you prefer?');
+			setCaption(t('sound.preference.whichPrefer'));
 			return;
 		}
 		if (sessionPhase === 'exploration') {
 			setSessionPhase('post-preference');
-			setCaption('After exploring — which version do you still prefer?');
+			setCaption(t('sound.preference.afterExploringWhich'));
 			return;
 		}
 	}, [sessionPhase]);
@@ -382,7 +384,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 	const handleSkipReplay = () => {
 		hasUsedReplay.current = true;
 		setSessionPhase('preference');
-		setCaption('Which version did you prefer?');
+		setCaption(t('sound.preference.whichPrefer'));
 	};
 
 	// ── Scene init: runs on mount (sceneIndex=0) and each time sceneIndex advances ──
@@ -457,7 +459,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		setTutorialStep(0);
 	};
 
-	const versionLabel = sessionPhase === 'videoA' ? 'Version 1' : 'Version 2';
+	const versionLabel = sessionPhase === 'videoA' ? t('sound.tutorial.versionOne') : t('sound.tutorial.versionTwo');
 	const versionLabelPosition =
 		sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
 	const totalScenes = story.scenes.length;
@@ -612,14 +614,14 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 							textAlign="center"
 							px={8}
 						>
-							Now listen to Version 2
+							{t('sound.preference.nowVersion2')}
 						</Text>
 						<Text
 							color="whiteAlpha.700"
 							fontSize={{ base: 'sm', md: 'md' }}
 							textAlign="center"
 						>
-							Starting in a moment...
+							{t('sound.preference.startingMoment')}
 						</Text>
 					</Flex>
 				)}
@@ -737,7 +739,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 					);
 					if (!saved) return;
 					setSessionPhase('exploration');
-					setCaption('Explore the scene and interact with objects.');
+					setCaption(t('sound.preference.exploreScene'));
 					setWiggleObjects(false);
 					setObjectsInteractive(!!currentVersion.interactive_enabled);
 				}}
@@ -768,7 +770,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				onSelect={(version) => {
 					setPostPreference(version);
 					setSessionPhase('post-strength');
-					setCaption('After exploring, how strong is your preference now?');
+					setCaption(t('sound.preference.afterExploring'));
 				}}
 			/>
 
@@ -776,7 +778,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 				isOpen={sessionPhase === 'post-strength'}
 				preferredVersion={postPreference}
 				selectedStrength={postStrength}
-				title="After exploring, how strong is your preference now?"
+				title={t('sound.preference.afterExploring')}
 				onSubmit={async (strength) => {
 					setPostStrength(strength);
 					if (!postPreference || !currentVersion?.id) return;

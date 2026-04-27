@@ -1,0 +1,127 @@
+{
+  "nav": {
+    "profile": "Perfil",
+    "lifestyle": "Exploração do Estilo de Vida",
+    "sound": "Exploração Sonora",
+    "digitalTwin": "Seu Gêmeo Digital"
+  },
+  "common": {
+    "back": "Voltar",
+    "next": "Avançar",
+    "ok": "OK",
+    "start": "Começar",
+    "selectOption": "Selecione uma opção",
+    "typeAnswer": "Digite sua resposta…",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "profile": {
+    "title": "Conhecendo você melhor",
+    "step": "Perfil — Etapa {{current}} de {{total}}",
+    "firstName": "Nome e Sobrenome",
+    "age": "Idade",
+    "email": "E-mail",
+    "firstTime": "É a sua primeira vez usando?",
+    "language": "Idioma preferido",
+    "languages": {
+      "english": "Inglês",
+      "danish": "Dinamarquês",
+      "bulgarian": "Búlgaro",
+      "hungarian": "Húngaro",
+      "portuguese": "Português (Brasil)"
+    }
+  },
+  "lifestyle": {
+  "step": "Etapa {{current}} de {{total}}"
+},
+  "sound": {
+    "welcome": {
+      "title": "Bem-vindo à Exploração Sonora",
+      "description": "Você está prestes a vivenciar uma série de explorações auditivas criadas especialmente para você. Vamos te explicar rapidamente como funciona.",
+      "start": "Começar"
+    },
+    "tutorial": {
+      "step1Title": "Sua Jornada",
+      "step1": "Você está prestes a percorrer uma série de momentos cotidianos, como passar pelas partes do seu dia.",
+      "step2Title": "Duas Versões",
+      "step2": "Vamos reproduzir cada cena duas vezes. Ouça com atenção — uma versão de cada vez.",
+      "step3Title": "Explore os Sons",
+      "step3": "Após ouvir, pressione e segure os objetos destacados para ouvir seus sons.",
+      "step4Title": "Experimente Você Mesmo",
+      "step4": "Você pode arrastar o divisor para a esquerda ou direita para revelar mais de cada versão. Experimente agora.",
+      "clickToContinue": "Clique em OK para continuar",
+      "versionOne": "Versão 1",
+      "versionTwo": "Versão 2"
+    },
+    "preference": {
+      "watchVersion1": "Assista à Versão 1",
+      "watchVersion2": "Agora assista à Versão 2.",
+      "whichPrefer": "Qual versão você preferiu?",
+      "howStrong": "Qual foi a intensidade dessa preferência?",
+      "afterExploring": "Após explorar, qual é a intensidade da sua preferência agora?",
+      "afterExploringWhich": "Após explorar — qual versão você ainda prefere?",
+      "exploreScene": "Explore a cena e interaja com os objetos.",
+      "replayOptions": "Opções de repetição: Versão 1, Versão 2 ou ambas.",
+      "nowVersion2": "Agora ouça a Versão 2",
+      "startingMoment": "Começando em instantes...",
+      "preferFirst": "Prefiro a primeira variante",
+      "preferSecond": "Prefiro a segunda variante",
+      "veryWeak": "Muito Fraca",
+      "weak": "Fraca",
+      "hesitant": "Indeciso",
+      "strong": "Forte",
+      "veryStrong": "Muito Forte"
+    },
+    "complete": {
+      "title": "Você completou sua jornada sonora!",
+      "description": "Obrigado por explorar o mundo do som conosco. Suas respostas nos ajudaram a construir seu Gêmeo Digital. Agora você pode revisar seu perfil sonoro personalizado.",
+      "button": "Ver Seu Gêmeo Digital"
+    },
+    "headphones": {
+      "title": "Antes de começar",
+      "description": "Antes de começar, recomendamos o uso de fones de ouvido. Como você gostaria de conectá-los?",
+      "wired": "Com fio — Conecte seus fones de ouvido",
+      "wireless": "Sem fio — Conexão Bluetooth"
+    }
+  },
+  "digitalTwin": {
+    "title": "Seu Gêmeo Digital",
+    "lifestyle": "Resultados do Estilo de Vida",
+    "sound": "Resultados de Preferência Sonora",
+    "category": "Categoria",
+    "question": "Pergunta / Item",
+    "selection": "Seleção do Usuário",
+    "created": "Criado em",
+    "preference": "Preferência",
+    "variant": "Variante",
+    "noResults": "Nenhum resultado ainda",
+    "variantA": "Variante A",
+    "variantB": "Variante B",
+    "preferFirst": "Prefiro a primeira variante",
+    "preferSecond": "Prefiro a segunda variante",
+    "afterExploring": "Após explorar",
+    "stillPreferFirst": "Ainda prefiro a primeira variante",
+    "changedToSecond": "Mudei para a segunda variante"
+  },
+  "headphones": {
+    "title": "Antes de começarmos",
+    "subtitle": "Antes de começarmos, recomendamos usar fones de ouvido. Como você gostaria de conectá-los?",
+    "wired": "Com fio — Conecte seus fones de ouvido",
+    "wireless": "Sem fio — Conexão Bluetooth"
+  },
+  "replay": {
+    "question": "Você quer ouvir uma ou ambas as variações novamente?",
+    "version1": "Ouvir a Versão 1 novamente",
+    "version2": "Ouvir a Versão 2 novamente",
+    "both": "Ouvir ambas novamente",
+    "skip": "Não, obrigado, continuar"
+  },
+  "imagePicker": {
+    "title": "E sobre sua vida cotidiana?",
+    "step1": "Escolha o que mais importa para você — 1 / 2",
+    "step2": "Escolha o que mais importa para você — 2 / 2"
+  },
+  "sections": {
+    "listenDifferently": "Cada pessoa ouve de forma diferente. Vamos entender o seu mundo."
+  }
+}

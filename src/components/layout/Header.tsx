@@ -1,7 +1,8 @@
 import React from 'react';
-import { Flex, Text, Box, IconButton } from '@chakra-ui/react';
+import { Flex, Text, Box, IconButton, NativeSelect } from '@chakra-ui/react';
 import { useTheme } from 'next-themes';
 import { FiGrid, FiMenu, FiMoon, FiSun, FiLogOut } from 'react-icons/fi';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface HeaderProps {
   title: string;
@@ -13,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut, userName, userEmail }) => {
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const isDark = theme === 'dark';
 
   const initials = userName
@@ -65,6 +67,24 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, onSignOut, userName
         right={6}
         gap={2}
       >
+        <NativeSelect.Root size="sm" width="auto">
+          <NativeSelect.Field
+            bg="transparent"
+            color="black"
+            border="none"
+            cursor="pointer"
+            fontSize="sm"
+            _focus={{ outline: 'none' }}
+            value={language}
+            onChange={(e) => void setLanguage(e.target.value)}
+          >
+            <option value="en">🇬🇧 English</option>
+            <option value="da">🇩🇰 Dansk</option>
+            <option value="bg">🇧🇬 Български</option>
+            <option value="hu">🇭🇺 Magyar</option>
+            <option value="pt">🇧🇷 Português</option>
+          </NativeSelect.Field>
+        </NativeSelect.Root>
         <Text mr={2}>{userName ?? userEmail ?? 'Guest'}</Text>
         <Box
           w="32px"

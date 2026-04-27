@@ -8,9 +8,12 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveQuizAnswers } from '../../hooks/useSaveQuizAnswers';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useTranslations } from '../../hooks/useTranslations';
 import { supabase } from '../../lib/supabase';
 import type { QuizAnswerEntry } from '../../hooks/useSaveQuizAnswers';
 
@@ -25,6 +28,11 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
   onNext,
   onBack,
 }) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const { translate: translateGroup } = useTranslations('lifestyle_question_groups', 'title');
+  const { translate: translateQuestion } = useTranslations('lifestyle_questions', 'text');
+  const { translate: translateOption } = useTranslations('answer_options', 'label');
   const { data: groups, loading, error } = useLifestyleQuestions();
   const { loading: saving, error: saveError, saveAnswers } = useSaveQuizAnswers();
 
@@ -95,6 +103,37 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       .eq('id', userId)
       .then(() => {});
   }, [currentGroupIndex, userId, quizStepLoaded]);
+
+  const allQuestions = useMemo(
+    () => groups.flatMap((g) => g.lifestyle_questions ?? []),
+    [groups],
+  );
+
+  const hearingAidQuestion = useMemo(
+    () => allQuestions.find((q) => q.text?.toLowerCase().includes('do you currently wear hearing aids')),
+    [allQuestions],
+  );
+
+  const howLongQuestion = useMemo(
+    () => allQuestions.find((q) => q.text?.toLowerCase().includes('how long have you had them')),
+    [allQuestions],
+  );
+
+  const notWearingOption = useMemo(
+    () => hearingAidQuestion?.answer_options?.find((o) => o.label?.toLowerCase().includes('not wearing')),
+    [hearingAidQuestion],
+  );
+
+  const howLongDisabled = useMemo(() => {
+    if (!hearingAidQuestion || !notWearingOption) return false;
+    return selections[hearingAidQuestion.id] === notWearingOption.id;
+  }, [selections, hearingAidQuestion, notWearingOption]);
+
+  useEffect(() => {
+    if (howLongDisabled && howLongQuestion) {
+      setFreeTexts((prev) => ({ ...prev, [howLongQuestion.id]: '' }));
+    }
+  }, [howLongDisabled, howLongQuestion]);
 
   const visibleGroups = useMemo(
     () =>
@@ -200,6 +239,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
       'Danish': 'da',
       'Bulgarian': 'bg',
       'Hungarian': 'hu',
+      'Brazilian (Portuguese)': 'pt',
     } as Record<string, string>)[langOption?.label ?? ''] ?? 'en';
 
     // Build profile update object — only include defined values.
@@ -278,7 +318,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
         _dark={{ color: 'gray.100' }}
         mb={2}
       >
-        Getting to know you better
+        {t('profile.title')}
       </Text>
 
       {currentGroup && (
@@ -289,7 +329,7 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
           _dark={{ color: 'gray.400' }}
           mb={{ base: 4, md: 8 }}
         >
-          {currentGroup.title} &mdash; Step {currentGroupIndex + 1} of {visibleGroups.length}
+          {translateGroup(currentGroup.id, currentGroup.title)} &mdash; {t('lifestyle.step', { current: currentGroupIndex + 1, total: visibleGroups.length })}
         </Text>
       )}
 
@@ -316,8 +356,10 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
           <Stack gap={{ base: 5, md: 6 }}>
             {currentGroup.lifestyle_questions.map((question) => {
               const enabled = isFollowUpEnabled(question);
+              const isHowLongDisabled = question.id === howLongQuestion?.id && howLongDisabled;
+              const isDisabled = !enabled || isHowLongDisabled;
               return (
-              <Box key={question.id} opacity={enabled ? 1 : 0.4} pointerEvents={enabled ? 'auto' : 'none'}>
+              <Box key={question.id} opacity={isDisabled ? 0.4 : 1} pointerEvents={isDisabled ? 'none' : 'auto'}>
                 <Text
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
@@ -325,18 +367,20 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                   color="gray.700"
                   _dark={{ color: 'gray.200' }}
                 >
-                  {question.text}
+                  {translateQuestion(question.id, question.text)}
                 </Text>
                 {question.type === 'free_text' ? (
                   <Input
-                    placeholder="Type your answer..."
+                    placeholder={isHowLongDisabled ? 'Not applicable' : t('common.typeAnswer')}
                     value={freeTexts[question.id] ?? ''}
                     onChange={(e) =>
                       setFreeTexts((prev) => ({ ...prev, [question.id]: e.target.value }))
                     }
                     bg="white"
                     _dark={{ bg: 'gray.700' }}
-                    disabled={!enabled}
+                    disabled={isDisabled}
+                    opacity={isHowLongDisabled ? 0.4 : 1}
+                    cursor={isHowLongDisabled ? 'not-allowed' : 'text'}
                     pl={3}
                   />
                 ) : (
@@ -349,11 +393,11 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
                       pl={3}
                     >
                       <option value="" disabled>
-                        Select an option
+                        {t('common.selectOption')}
                       </option>
                       {(question.answer_options ?? []).map((option) => (
                         <option key={option.id} value={option.id}>
-                          {option.label}
+                          {translateOption(option.id, option.label)}
                         </option>
                       ))}
                     </NativeSelect.Field>
@@ -368,10 +412,10 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
 
       <Flex justify="space-between" w="100%">
         <StageButton variantType="outline" onClick={handleBackGroup}>
-          Back
+          {t('common.back')}
         </StageButton>
         <StageButton variantType="primary" loading={saving} onClick={() => void handleNextGroup()}>
-          Next
+          {t('common.next')}
         </StageButton>
       </Flex>
     </Box>

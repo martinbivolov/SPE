@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Flex, Splitter, Text } from '@chakra-ui/react';
 import { FiMusic } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import StageButton from './StageButton';
 
 interface SoundTutorialProps {
@@ -37,21 +38,20 @@ const MusicBubble: React.FC<{
   </Box>
 );
 
-const stepTitles = [
-  "Your Journey",
-  "Two Versions",
-  "Explore the Sounds",
-  "Try It Yourself",
-];
-
-const tutorialSteps = [
-  "You are about to move through a series of everyday moments,\nlike passing through parts of your day.",
-  "We will play each scene twice.\nListen carefully — one version at a time.",
-  "After listening, you can press and hold the glowing objects to hear their sounds.",
-  "You can also drag the divider left or right\nto reveal more of either version.\nTry it now.",
-];
-
 const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
+  const { t } = useTranslation();
+  const stepTitles = [
+    t('sound.tutorial.step1Title'),
+    t('sound.tutorial.step2Title'),
+    t('sound.tutorial.step3Title'),
+    t('sound.tutorial.step4Title'),
+  ];
+  const tutorialSteps = [
+    t('sound.tutorial.step1'),
+    t('sound.tutorial.step2'),
+    t('sound.tutorial.step3'),
+    t('sound.tutorial.step4'),
+  ];
   const [phase, setPhase] = useState<'intro' | 'journey' | 'tutorial'>('tutorial');
   const [journeyStep, setJourneyStep] = useState(-1);
   const [step, setStep] = useState(0);
@@ -346,7 +346,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                   borderRadius="full" fontSize="sm" fontWeight="700"
                   style={{ pointerEvents: 'none' }}
                 >
-                  Version 2
+                  {t('sound.tutorial.versionTwo')}
                 </Box>
               )}
               {animateCircles && (
@@ -406,7 +406,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                   borderRadius="full" fontSize="sm" fontWeight="700"
                   style={{ pointerEvents: 'none' }}
                 >
-                  Version 1
+                  {t('sound.tutorial.versionOne')}
                 </Box>
               )}
               {animateCircles && (
@@ -512,7 +512,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
             </Text>
 
             <Text style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>
-              {isLastStep ? '' : 'Click ok to continue'}
+              {isLastStep ? '' : t('sound.tutorial.clickToContinue')}
             </Text>
 
             <StageButton
@@ -525,7 +525,7 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
                 }
               }}
             >
-              {isLastStep ? 'Start' : 'ok'}
+              {isLastStep ? t('common.start') : t('common.ok')}
             </StageButton>
           </Box>
 
@@ -555,14 +555,14 @@ const SoundTutorial: React.FC<SoundTutorialProps> = ({ onNext, onBack }) => {
               : onBack
           }
         >
-          Back
+          {t('common.back')}
         </StageButton>
 
         <StageButton
           variantType={isLastStep ? 'primary' : 'disabled'}
           onClick={isLastStep ? onNext : undefined}
         >
-          Next
+          {t('common.next')}
         </StageButton>
       </Flex>
     </Box>

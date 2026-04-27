@@ -1,0 +1,127 @@
+{
+  "nav": {
+    "profile": "Profile",
+    "lifestyle": "Lifestyle Exploration",
+    "sound": "Sound Exploration",
+    "digitalTwin": "Your Digital Twin"
+  },
+  "common": {
+    "back": "Back",
+    "next": "Next",
+    "ok": "OK",
+    "start": "Start",
+    "selectOption": "Select an option",
+    "typeAnswer": "Type your answer…",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "profile": {
+    "title": "Getting to know you better",
+    "step": "Profile — Step {{current}} of {{total}}",
+    "firstName": "First name and Last name",
+    "age": "Age",
+    "email": "Email",
+    "firstTime": "Are you a first time user?",
+    "language": "Preferred language",
+    "languages": {
+      "english": "English",
+      "danish": "Danish",
+      "bulgarian": "Bulgarian",
+      "hungarian": "Hungarian",
+      "portuguese": "Brazilian (Portuguese)"
+    }
+  },
+  "lifestyle": {
+  "step": "Step {{current}} of {{total}}"
+},
+  "sound": {
+    "welcome": {
+      "title": "Welcome to the Sound Exploration",
+      "description": "You're about to experience a series of listening exploration crafted just for you. We'll quickly guide you through how it works.",
+      "start": "Start"
+    },
+    "tutorial": {
+      "step1Title": "Your Journey",
+      "step1": "You are about to move through a series of everyday moments, like passing through parts of your day.",
+      "step2Title": "Two Versions",
+      "step2": "We will play each scene twice. Listen carefully — one version at a time.",
+      "step3Title": "Explore the Sounds",
+      "step3": "After listening, press and hold the highlighted objects to hear their sounds.",
+      "step4Title": "Try It Yourself",
+      "step4": "You can drag the divider left or right to reveal more of each version. Try it now.",
+      "clickToContinue": "Click OK to continue",
+      "versionOne": "Version 1",
+      "versionTwo": "Version 2"
+    },
+    "preference": {
+      "watchVersion1": "Watch Version 1",
+      "watchVersion2": "Now watch Version 2.",
+      "whichPrefer": "Which version did you prefer?",
+      "howStrong": "How strong was that preference?",
+      "afterExploring": "After exploring, how strong is your preference now?",
+      "afterExploringWhich": "After exploring — which version do you still prefer?",
+      "exploreScene": "Explore the scene and interact with objects.",
+      "replayOptions": "Replay options: Version 1, Version 2, or both.",
+      "nowVersion2": "Now listen to Version 2",
+      "startingMoment": "Starting in a moment...",
+      "preferFirst": "Prefer first variant",
+      "preferSecond": "Prefer second variant",
+      "veryWeak": "Very Weak",
+      "weak": "Weak",
+      "hesitant": "Hesitant",
+      "strong": "Strong",
+      "veryStrong": "Very Strong"
+    },
+    "complete": {
+      "title": "You've completed your sound journey!",
+      "description": "Thank you for exploring the world of sound with us. Your responses have helped us build your Digital Twin. You can now review your personalised sound profile.",
+      "button": "View Your Digital Twin"
+    },
+    "headphones": {
+      "title": "Before we begin",
+      "description": "Before we begin, we recommend using headphones. How would you like to connect them?",
+      "wired": "By wire — Plug in your headphones",
+      "wireless": "Wireless — Bluetooth connection"
+    }
+  },
+  "digitalTwin": {
+    "title": "Your Digital Twin",
+    "lifestyle": "Lifestyle Results",
+    "sound": "Sound Preference Results",
+    "category": "Category",
+    "question": "Question / Item",
+    "selection": "User Selection",
+    "created": "Created",
+    "preference": "Preference",
+    "variant": "Variant",
+    "noResults": "No results yet",
+    "variantA": "Variant A",
+    "variantB": "Variant B",
+    "preferFirst": "Prefer first variant",
+    "preferSecond": "Prefer second variant",
+    "afterExploring": "After exploring",
+    "stillPreferFirst": "Still prefer first variant",
+    "changedToSecond": "Changed to second variant"
+  },
+  "headphones": {
+    "title": "Before we begin",
+    "subtitle": "Last touch before we begin — we recommend using headphones. How would you like to connect them?",
+    "wired": "By wire — Plug in your headphones",
+    "wireless": "Wireless — Bluetooth connection"
+  },
+  "replay": {
+    "question": "Do you want to listen to one or both variations again?",
+    "version1": "Listen to Version 1 again",
+    "version2": "Listen to Version 2 again",
+    "both": "Listen to both again",
+    "skip": "No thanks, continue"
+  },
+  "imagePicker": {
+    "title": "What about your daily life?",
+    "step1": "Pick what matters most to you — 1 / 2",
+    "step2": "Pick what matters most to you — 2 / 2"
+  },
+  "sections": {
+    "listenDifferently": "Everyone listens differently. Let's understand your world."
+  }
+}

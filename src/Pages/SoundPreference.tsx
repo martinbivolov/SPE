@@ -6,6 +6,7 @@ import Footer from '../components/layout/Footer';
 import SoundPreferenceSplitScreen from '../features/soundSplit/SoundPreferenceSplitScreen';
 import { useStoryRecommendation } from '../hooks/useStoryRecommendation';
 import { useProfile } from '../hooks/useProfile';
+import { useLanguage } from '../contexts/LanguageContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 interface SoundPreferenceProps {
@@ -17,9 +18,10 @@ interface SoundPreferenceProps {
 const SoundPreference: React.FC<SoundPreferenceProps> = ({ userId, onCompleted, onSignOut }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile, loading: profileLoading } = useProfile(userId);
+  const { language } = useLanguage();
   const { data: story, loading: storyLoading, error } = useStoryRecommendation(
     profileLoading ? null : userId,
-    profile?.language ?? 'en',
+    language,
   );
   const loading = profileLoading || storyLoading;
 const toggleSidebar = () => setSidebarOpen((v) => !v);

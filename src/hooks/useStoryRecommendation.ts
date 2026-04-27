@@ -62,6 +62,17 @@ export const useStoryRecommendation = (
 
     console.log('[story] language:', language);
 
+    const getLocalised = (
+      base: string | null,
+      da: string | null | undefined,
+      hu: string | null | undefined,
+      bg: string | null | undefined,
+      pt: string | null | undefined,
+    ): string | null => {
+      const map: Record<string, string | null | undefined> = { da, hu, bg, pt };
+      return map[language] ?? base ?? null;
+    };
+
     const fetchStory = async () => {
       setLoading(true);
       setError(null);
@@ -85,7 +96,7 @@ export const useStoryRecommendation = (
 
         const { data: recRow, error: recError } = await supabase
           .from('story_recommendation')
-          .select('story_id, story_name, intro_narration_url, narration_url_da, end_narration_url, end_narration_url_da')
+          .select('story_id, story_name, intro_narration_url, narration_url_da, narration_url_hu, narration_url_bg, narration_url_pt, end_narration_url, end_narration_url_da, end_narration_url_hu, end_narration_url_bg, end_narration_url_pt')
           .eq('user_id', user.id)
           .order('score', { ascending: false })
           .limit(1)
@@ -101,19 +112,27 @@ export const useStoryRecommendation = (
           storyId = recRow.story_id as string;
           storyName = recRow.story_name as string;
           const enUrl = recRow.intro_narration_url as string | null;
-          storyNarrationUrl = language === 'da'
-            ? ((recRow.narration_url_da ?? enUrl) as string | null)
-            : enUrl;
-          storyEndNarrationUrl = language === 'da'
-            ? ((recRow.end_narration_url_da ?? recRow.end_narration_url ?? null) as string | null)
-            : (recRow.end_narration_url ?? null) as string | null;
+          storyNarrationUrl = getLocalised(
+            enUrl,
+            recRow.narration_url_da,
+            recRow.narration_url_hu,
+            recRow.narration_url_bg,
+            recRow.narration_url_pt,
+          );
+          storyEndNarrationUrl = getLocalised(
+            recRow.end_narration_url,
+            recRow.end_narration_url_da,
+            recRow.end_narration_url_hu,
+            recRow.end_narration_url_bg,
+            recRow.end_narration_url_pt,
+          );
         }
 
         // ── Step 2: Fallback — story with sort_order = 1 ────────────────────
         if (!storyId) {
           const { data: fallback, error: fallbackError } = await supabase
             .from('stories')
-            .select('id, name, narration_url, narration_url_da, end_narration_url, end_narration_url_da')
+            .select('id, name, narration_url, narration_url_da, narration_url_hu, narration_url_bg, narration_url_pt, end_narration_url, end_narration_url_da, end_narration_url_hu, end_narration_url_bg, end_narration_url_pt')
             .eq('sort_order', 1)
             .limit(1)
             .maybeSingle();
@@ -129,12 +148,20 @@ export const useStoryRecommendation = (
 
           storyId = fallback.id as string;
           storyName = fallback.name as string;
-          storyNarrationUrl = language === 'da'
-            ? ((fallback.narration_url_da ?? fallback.narration_url) as string | null)
-            : fallback.narration_url as string | null;
-          storyEndNarrationUrl = language === 'da'
-            ? ((fallback.end_narration_url_da ?? fallback.end_narration_url ?? null) as string | null)
-            : (fallback.end_narration_url ?? null) as string | null;
+          storyNarrationUrl = getLocalised(
+            fallback.narration_url as string | null,
+            fallback.narration_url_da,
+            fallback.narration_url_hu,
+            fallback.narration_url_bg,
+            fallback.narration_url_pt,
+          );
+          storyEndNarrationUrl = getLocalised(
+            fallback.end_narration_url as string | null,
+            fallback.end_narration_url_da,
+            fallback.end_narration_url_hu,
+            fallback.end_narration_url_bg,
+            fallback.end_narration_url_pt,
+          );
         }
 
         // ── Step 3: All scenes for the story with versions + objects ─────────
@@ -142,8 +169,8 @@ export const useStoryRecommendation = (
           .from('scenes')
           .select(`
             id, scene_type, name, sort_order,
-            narration_url, narration_url_da,
-            filler_url, filler_url_da,
+            narration_url, narration_url_da, narration_url_hu, narration_url_bg, narration_url_pt,
+            filler_url, filler_url_da, filler_url_hu, filler_url_bg, filler_url_pt,
             scene_versions (
               id, video_a_url, video_b_url, background_image_url,
               interactive_enabled, active,
@@ -199,12 +226,20 @@ export const useStoryRecommendation = (
             scene_type: scene.scene_type as string,
             name: scene.name as string,
             sort_order: scene.sort_order as number,
-            narration_url: language === 'da'
-              ? ((scene.narration_url_da ?? scene.narration_url) as string)
-              : scene.narration_url as string,
-            filler_url: language === 'da'
-              ? ((scene.filler_url_da ?? scene.filler_url ?? null) as string | null)
-              : (scene.filler_url ?? null) as string | null,
+            narration_url: getLocalised(
+              scene.narration_url,
+              scene.narration_url_da,
+              scene.narration_url_hu,
+              scene.narration_url_bg,
+              scene.narration_url_pt,
+            ) as string,
+            filler_url: getLocalised(
+              scene.filler_url,
+              scene.filler_url_da,
+              scene.filler_url_hu,
+              scene.filler_url_bg,
+              scene.filler_url_pt,
+            ),
             version: chosen
               ? {
                   id: chosen.id as string,

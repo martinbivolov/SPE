@@ -85,6 +85,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onNext }) => {
               <option value="en">English</option>
               <option value="es">Spanish</option>
               <option value="fr">French</option>
+              <option value="hu">Hungarian</option>
+              <option value="bg">Bulgarian</option>
+              <option value="pt">Portuguese</option>
             </NativeSelect.Field>
           </NativeSelect.Root>
         </Box>

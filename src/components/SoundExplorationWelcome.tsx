@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Flex, Text, Icon } from '@chakra-ui/react';
 import { FiHeadphones } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import StageButton from './StageButton';
 
 interface SoundExplorationWelcomeProps {
@@ -9,6 +10,7 @@ interface SoundExplorationWelcomeProps {
 }
 
 const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onStart, onBack }) => {
+  const { t } = useTranslation();
   return (
     <Box
       maxW="1120px"
@@ -61,7 +63,7 @@ const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onSta
           _dark={{ color: 'gray.100' }}
           lineHeight="1.2"
         >
-          Welcome to the Sound Exploration
+          {t('sound.welcome.title')}
         </Text>
 
         {/* Description */}
@@ -71,8 +73,7 @@ const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onSta
           _dark={{ color: 'gray.400' }}
           lineHeight="1.7"
         >
-          You're about to experience a sound exploration crafted just for you.
-          Let us understand how you hear the worls, but before we begin, we'll quickly guide you through how it works.
+          {t('sound.welcome.description')}
         </Text>
 
         {/* Start card / button */}
@@ -99,14 +100,14 @@ const SoundExplorationWelcome: React.FC<SoundExplorationWelcomeProps> = ({ onSta
             transform: 'translateY(0)',
           }}
         >
-          Start
+          {t('sound.welcome.start')}
         </Box>
       </Flex>
 
       {/* Back */}
       <Flex justify="flex-start" w="100%" mt="auto" pt={8}>
         <StageButton variantType="outline" onClick={onBack}>
-          Back
+          {t('common.back')}
         </StageButton>
       </Flex>
     </Box>

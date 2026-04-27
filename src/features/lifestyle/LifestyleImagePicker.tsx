@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Flex, Image, SimpleGrid, Spinner, Text } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import StageButton from '../../components/StageButton';
 import { useImagePickerOptions } from '../../hooks/useImagePickerOptions';
 import { useSaveImagePick } from '../../hooks/useSaveImagePick';
+import { useTranslations } from '../../hooks/useTranslations';
 import { supabase } from '../../lib/supabase';
 
 interface LifestyleImagePickerProps {
@@ -20,6 +22,8 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
   selectedImages,
   onSelectionChange,
 }) => {
+  const { t } = useTranslation();
+  const { translate: translateOption } = useTranslations('image_picker_options', 'label');
   const { data: options, loading, error } = useImagePickerOptions();
   const { loading: saveLoading, error: saveError, initializeUserTagWeights, saveSelections } = useSaveImagePick();
   const [currentPage, setCurrentPage] = useState(0);
@@ -116,10 +120,10 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
       overflow="hidden"
     >
       <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="700" textAlign="center" color="gray.800" _dark={{ color: 'gray.100' }} mb={1}>
-        What about your daily life?
+        {t('imagePicker.title')}
       </Text>
       <Text fontSize="md" color="gray.500" _dark={{ color: 'gray.400' }} textAlign="center" mb={{ base: 5, md: 8 }}>
-        Pick what matters most to you — {currentPage + 1} / {totalPages}
+        {currentPage === 0 ? t('imagePicker.step1') : t('imagePicker.step2')}
       </Text>
 
       {saveError && (
@@ -161,7 +165,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
               transition="all 0.2s ease"
               _focusVisible={{ outline: "2px solid", outlineColor: "purple.400" }}
             >
-              <Image src={option.image_url} alt={option.label ?? ''} w="100%" h={{ base: "120px", md: "140px" }} objectFit="cover" />
+              <Image src={option.image_url} alt={translateOption(option.id, option.label ?? '')} w="100%" h={{ base: "120px", md: "140px" }} objectFit="cover" />
               {/* Dark gradient for readability */}
               <Box
                 position="absolute"
@@ -191,7 +195,7 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
                 textShadow="0 1px 2px rgba(0,0,0,0.8)"
                 pointerEvents="none"
               >
-                {option.label}
+                {translateOption(option.id, option.label ?? '')}
               </Text>
             </Box>
           );
@@ -201,10 +205,10 @@ const LifestyleImagePicker: React.FC<LifestyleImagePickerProps> = ({
 
       <Flex justify="space-between" w="100%" mt="auto">
         <StageButton variantType="outline" onClick={handleBackPage}>
-          Back
+          {t('common.back')}
         </StageButton>
         <StageButton variantType="primary" loading={saveLoading} onClick={() => void handleNextPage()}>
-          Next
+          {t('common.next')}
         </StageButton>
       </Flex>
     </Box>
