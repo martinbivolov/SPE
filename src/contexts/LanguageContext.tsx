@@ -22,14 +22,14 @@ export const LanguageProvider: React.FC<{
 
   // Sync i18n on mount with the profile's saved language
   useEffect(() => {
-    const i18nCode = initialLanguage === 'pt' ? 'pt' : initialLanguage === 'hu' ? 'hu' : 'en';
+    const i18nCode = initialLanguage === 'pt' ? 'pt' : initialLanguage === 'hu' ? 'hu' : initialLanguage === 'da' ? 'da' : initialLanguage === 'bg' ? 'bg' : 'en';
     i18n.changeLanguage(i18nCode);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLanguage = async (code: string) => {
     setLanguageState(code);
     clearTranslationCache();
-    const i18nCode = code === 'pt' ? 'pt' : code === 'hu' ? 'hu' : 'en';
+    const i18nCode = code === 'pt' ? 'pt' : code === 'hu' ? 'hu' : code === 'da' ? 'da' : code === 'bg' ? 'bg' : 'en';
     await i18n.changeLanguage(i18nCode);
     await supabase
       .from('profiles')

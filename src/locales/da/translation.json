@@ -1,0 +1,124 @@
+{
+  "nav": {
+    "profile": "Profil",
+    "lifestyle": "Livsstilsudforskning",
+    "sound": "Lydudforskning",
+    "digitalTwin": "Din digitale tvilling"
+  },
+  "common": {
+    "back": "Tilbage",
+    "next": "Næste",
+    "ok": "OK",
+    "start": "Start",
+    "selectOption": "Vælg en mulighed",
+    "typeAnswer": "Skriv dit svar…",
+    "yes": "Ja",
+    "no": "Nej"
+  },
+  "profile": {
+    "title": "Lad os lære dig bedre at kende",
+    "step": "Profil — Trin {{current}} af {{total}}",
+    "firstName": "For- og efternavn",
+    "age": "Alder",
+    "email": "E-mail",
+    "firstTime": "Er det første gang du bruger dette system?",
+    "language": "Foretrukket sprog",
+    "languages": {
+      "english": "Engelsk",
+      "danish": "Dansk",
+      "bulgarian": "Bulgarsk",
+      "hungarian": "Ungarsk",
+      "portuguese": "Portugisisk (Brasilien)"
+    }
+  },
+  "lifestyle": {
+    "step": "Trin {{current}} af {{total}}"
+  },
+  "sections": {
+    "listenDifferently": "Alle lytter forskelligt. Lad os forstå din verden.",
+    "yourListeningWorld": "Din lytteverden",
+    "whatAppliesToYou": "Hvad gælder for dig",
+    "comfortFocus": "Komfort og fokus"
+  },
+  "sound": {
+    "welcome": {
+      "title": "Velkommen til lydudforskningen",
+      "description": "Du er ved at opleve en række lyttescener skabt specielt til dig. Sæt dine høretelefoner på, slap af, og lad os lære, hvordan du hører verden. Inden vi begynder, vil vi kort guide dig gennem, hvordan det fungerer.",
+      "start": "Begynd at lytte"
+    },
+    "tutorial": {
+      "step1Title": "Din rejse",
+      "step1": "Du er ved at bevæge dig gennem en serie af hverdagsmomenter, som om du passerer gennem dele af din dag.",
+      "step2Title": "To versioner",
+      "step2": "Vi afspiller hver scene to gange. Lyt nøje — én version ad gangen.",
+      "step3Title": "Udforsk lydene",
+      "step3": "Efter at have lyttet skal du trykke og holde de fremhævede objekter nede for at høre deres lyde.",
+      "step4Title": "Prøv det selv",
+      "step4": "Du kan trække skillelinjen til venstre eller højre for at afsløre mere af hver version.",
+      "clickToContinue": "Klik OK for at fortsætte",
+      "versionOne": "Version 1",
+      "versionTwo": "Version 2"
+    },
+    "preference": {
+      "watchVersion1": "Se Version 1",
+      "watchVersion2": "Se nu Version 2.",
+      "whichPrefer": "Hvilken version foretrækker du?",
+      "howStrong": "Hvor stærk er denne præference?",
+      "afterExploring": "Efter udforskning, hvor stærk er din præference nu?",
+      "afterExploringWhich": "Efter udforskning — hvilken version foretrækker du stadig?",
+      "exploreScene": "Udforsk scenen og interager med objekterne.",
+      "replayOptions": "Afspilningsmuligheder: Version 1, Version 2 eller begge.",
+      "nowVersion2": "Lyt nu til Version 2",
+      "startingMoment": "Starter om et øjeblik...",
+      "preferFirst": "Foretrækker første version",
+      "preferSecond": "Foretrækker anden version",
+      "veryWeak": "Meget svag",
+      "weak": "Svag",
+      "hesitant": "Tøvende",
+      "strong": "Stærk",
+      "veryStrong": "Meget stærk"
+    },
+    "complete": {
+      "title": "Du har gennemført din lydrejse!",
+      "description": "Tak fordi du udforskede lydenes verden med os. Dine svar har hjulpet os med at bygge din digitale tvilling. Du kan nu gennemgå din personlige lydprofil.",
+      "button": "Se din digitale tvilling"
+    },
+    "headphones": {
+      "title": "Inden vi begynder",
+      "subtitle": "Inden vi begynder, anbefaler vi brug af høretelefoner. Hvordan vil du forbinde dem?",
+      "wired": "Med ledning — Tilslut dine høretelefoner",
+      "wireless": "Trådløs — Bluetooth-forbindelse"
+    }
+  },
+  "replay": {
+    "question": "Vil du lytte til en eller begge variationer igen?",
+    "version1": "Lyt til Version 1 igen",
+    "version2": "Lyt til Version 2 igen",
+    "both": "Lyt til begge igen",
+    "skip": "Nej tak, fortsæt"
+  },
+  "digitalTwin": {
+    "title": "Din digitale tvilling",
+    "lifestyle": "Livsstilsresultater",
+    "sound": "Lydpræferenceresultater",
+    "category": "Kategori",
+    "question": "Spørgsmål / Emne",
+    "selection": "Brugervalg",
+    "created": "Oprettet",
+    "preference": "Præference",
+    "variant": "Variant",
+    "noResults": "Ingen resultater endnu",
+    "variantA": "Variant A",
+    "variantB": "Variant B",
+    "preferFirst": "Foretrækker første variant",
+    "preferSecond": "Foretrækker anden variant",
+    "afterExploring": "Efter udforskning",
+    "stillPreferFirst": "Foretrækker stadig første variant",
+    "changedToSecond": "Skiftet til anden variant"
+  },
+  "imagePicker": {
+    "title": "Hvad med dit daglige liv?",
+    "step1": "Vælg hvad der betyder mest for dig — 1 / 2",
+    "step2": "Vælg hvad der betyder mest for dig — 2 / 2"
+  }
+}
