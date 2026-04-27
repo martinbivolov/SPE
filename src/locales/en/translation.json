@@ -107,7 +107,8 @@
     "title": "Before we begin",
     "subtitle": "Last touch before we begin — we recommend using headphones. How would you like to connect them?",
     "wired": "By wire — Plug in your headphones",
-    "wireless": "Wireless — Bluetooth connection"
+    "wireless": "Wireless — Bluetooth connection",
+    "adjustVolume": "Adjust your volume"
   },
   "replay": {
     "question": "Do you want to listen to one or both variations again?",
