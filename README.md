@@ -1,73 +1,133 @@
-# React + TypeScript + Vite
+# WSA Sound Preference Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personalised audio experience web application built for audiology research. Users complete a lifestyle questionnaire, receive a recommended story based on their profile, and go through an A/B sound preference experience — helping clinicians understand how patients hear and perceive sound in everyday environments.
 
-Currently, two official plugins are available:
+**Live:** https://sound-preference-uni-project.onrender.com
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## What It Does
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Onboarding & Lifestyle Quiz** — patients answer questions about their hearing history, lifestyle, medical background and sound preferences
+2. **Image Picker** — patients select images representing their daily listening environments
+3. **Story Recommendation** — a personalised story of 4 scenes is recommended based on tag weights from quiz answers
+4. **Sound Exploration** — patients listen to A/B versions of each scene, interact with sound objects, and indicate their preference
+5. **Digital Twin** — a results page showing the patient's sound preference profile for use by the clinician
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Layer | Technology |
+|---|---|
+| Frontend | React 19 + TypeScript |
+| Build | Vite 8 |
+| UI | Chakra UI v3 |
+| Routing | React Router v7 |
+| Backend | Supabase (Postgres + Auth + Storage) |
+| i18n | react-i18next |
+| Deployment | Render |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Languages Supported
+
+The app supports multilingual narration audio and UI translations:
+
+- 🇬🇧 English
+- 🇩🇰 Danish
+- 🇧🇬 Bulgarian
+- 🇭🇺 Hungarian
+- 🇧🇷 Brazilian Portuguese *(UI only — audio coming soon)*
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- A Supabase project (see Environment Variables below)
+
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+
+# Install dependencies
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create a `.env` file in the root of the project:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+Please reach for these details 
 ```
+
+You can find these in your Supabase dashboard under **Project Settings → API**.
+
+### Running Locally
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:3000`.
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+Output is in the `dist/` folder.
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/          # Shared UI components (Header, Sidebar, Footer)
+├── contexts/            # React contexts (LanguageContext)
+├── features/
+│   └── soundSplit/      # Sound exploration experience components
+├── hooks/               # Custom hooks (useProfile, useStoryRecommendation, useTranslations...)
+├── locales/             # i18n translation files (en, da, bg, hu, pt)
+├── Pages/               # Page-level components
+└── i18n.ts              # i18next configuration
+```
+
+---
+
+## Database
+
+Built on Supabase (PostgreSQL). Key tables:
+
+- `profiles` — user profile and language preference
+- `stories` / `scenes` / `scene_versions` / `scene_objects` — content structure
+- `lifestyle_questions` / `answer_options` — questionnaire content
+- `session_results` — A/B preference results per scene
+- `user_tag_weights` — weighted tags driving story recommendation
+- `translations` — multilingual DB content (question text, answer labels etc.)
+
+---
+
+## Deployment
+
+The app is deployed on **Render** with auto-deploy enabled on the `main` branch. Every push to `main` triggers a new build automatically.
+
+Environment variables are managed via Render's **Secret Files** feature — a `.env` file is stored securely and injected at build time.
+
+---
+
+## Team
+
+Built as part of a university research project with WSA Audiology.
+
+- **Reka Meszaros** — Master's student
+- **Martin Bivolov** — Master's student
