@@ -107,7 +107,8 @@
     "title": "Antes de começarmos",
     "subtitle": "Antes de começarmos, recomendamos usar fones de ouvido. Como você gostaria de conectá-los?",
     "wired": "Com fio — Conecte seus fones de ouvido",
-    "wireless": "Sem fio — Conexão Bluetooth"
+    "wireless": "Sem fio — Conexão Bluetooth",
+    "adjustVolume": "Ajuste o volume"
   },
   "replay": {
     "question": "Você quer ouvir uma ou ambas as variações novamente?",

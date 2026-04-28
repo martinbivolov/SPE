@@ -120,5 +120,12 @@
     "title": "Mi a helyzet a mindennapi életben?",
     "step1": "Válassza ki, mi a legfontosabb Önnek — 1 / 2",
     "step2": "Válassza ki, mi a legfontosabb Önnek — 2 / 2"
+  },
+  "headphones": {
+    "title": "Mielőtt elkezdenénk",
+    "subtitle": "Mielőtt elkezdenénk, javasoljuk a fejhallgató használatát. Hogyan szeretné csatlakoztatni?",
+    "wired": "Vezetékes — Csatlakoztassa a fejhallgatót",
+    "wireless": "Vezeték nélküli — Bluetooth kapcsolat",
+    "adjustVolume": "Hangerő beállítása"
   }
 }

@@ -103,7 +103,7 @@ const HeadphoneSetup: React.FC<HeadphoneSetupProps> = ({ onNext, onBack }) => {
       {choice && (
         <Flex direction="column" align="center" gap={3} mb={4}>
           <Text fontWeight="600" color="gray.700">
-            Adjust your volume
+            {t('headphones.adjustVolume')}
           </Text>
 
           <Flex align="center" gap={4} w="100%" maxW="400px">
