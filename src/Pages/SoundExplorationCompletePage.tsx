@@ -23,7 +23,7 @@ const SoundExplorationCompletePage: React.FC<SoundExplorationCompletePageProps> 
   return (
     <Flex h="100vh" bg="gray.50" _dark={{ bg: 'gray.800' }} position="relative">
       <Sidebar
-        activeItem="SoundExploration"
+        activeItem="Sound"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onOpen={() => setSidebarOpen(true)}

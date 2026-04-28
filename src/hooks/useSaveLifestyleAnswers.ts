@@ -24,7 +24,7 @@ export const useSaveLifestyleAnswers = (): UseSaveLifestyleAnswersResult => {
   const [error, setError] = useState<string | null>(null);
 
   const saveAnswers = useCallback(
-    async (userId: string, answers: LifestyleAnswer[]): Promise<boolean> => {
+    async (_userId: string, answers: LifestyleAnswer[]): Promise<boolean> => {
       setLoading(true);
       setError(null);
 

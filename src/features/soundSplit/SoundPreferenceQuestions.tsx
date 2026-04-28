@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import StageButton from '../../components/StageButton';
 import { useLifestyleQuestions } from '../../hooks/useLifestyleQuestions';
 import { useSaveQuizAnswers } from '../../hooks/useSaveQuizAnswers';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { useTranslations } from '../../hooks/useTranslations';
 import { supabase } from '../../lib/supabase';
 import type { QuizAnswerEntry } from '../../hooks/useSaveQuizAnswers';
@@ -29,7 +28,6 @@ const SoundPreferenceQuestions: React.FC<SoundPreferenceQuestionsProps> = ({
   onBack,
 }) => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
   const { translate: translateGroup } = useTranslations('lifestyle_question_groups', 'title');
   const { translate: translateQuestion } = useTranslations('lifestyle_questions', 'text');
   const { translate: translateOption } = useTranslations('answer_options', 'label');

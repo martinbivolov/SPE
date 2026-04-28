@@ -134,7 +134,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 
 	// All media (narration audio + scene videos) routes through the single VideoPlayer.
 	// This ensures handleVideoEnded can chain phases in the correct order without overlap.
-	const isPlayerActive = isVideoPhase || isNarrationPhase || sessionPhase === 'end-narration';
+	const isPlayerActive = isVideoPhase || isNarrationPhase;
 
 	const clearTimers = useCallback(() => {
 		timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
@@ -464,7 +464,7 @@ const SoundPreferenceSplitScreen: React.FC<SoundPreferenceSplitScreenProps> = ({
 		sessionPhase === 'videoA' ? { top: 4, right: 4 } : { top: 4, left: 4 };
 	const totalScenes = story.scenes.length;
 
-	const containerAspectRatio = isVideoPhase || isNarrationPhase || sessionPhase === 'between-videos' || sessionPhase === 'end-narration'
+	const containerAspectRatio = isVideoPhase || isNarrationPhase || sessionPhase === 'between-videos'
 		? '16/9'
 		: '3/2';
 

@@ -38,7 +38,7 @@ export const useSaveQuizAnswers = (): UseSaveQuizAnswersResult => {
   const [error, setError] = useState<string | null>(null);
 
   const saveAnswers = useCallback(
-    async (userId: string, answers: QuizAnswerEntry[]): Promise<boolean> => {
+    async (_userId: string, answers: QuizAnswerEntry[]): Promise<boolean> => {
       setLoading(true);
       setError(null);
 
