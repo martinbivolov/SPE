@@ -3,6 +3,7 @@
 A personalised audio experience web application built for audiology research. Users complete a lifestyle questionnaire, receive a recommended story based on their profile, and go through an A/B sound preference experience — helping clinicians understand how patients hear and perceive sound in everyday environments.
 
 **Live:** https://sound-preference-uni-project.onrender.com
+**Figma:**https://www.figma.com/design/cayu5Dia3vf6pwb1GpfRgo/SP---Wireframe?node-id=1-2&t=EuOlSIFVH014btEb-1
 
 ---
 
